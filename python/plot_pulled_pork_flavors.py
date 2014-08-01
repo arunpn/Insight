@@ -26,6 +26,8 @@ for match in search.matches:
 flavors = np.vstack(flavors).astype(float)
 flavors = pd.DataFrame(data=flavors, columns=flav_names, index=ids)
 
+flavors.to_hdf(data_dir + 'pulled_pork_flavors.h5', 'df')
+
 ax = flavors.hist(bins=7)
 for i in range(ax.shape[0]):
     for j in range(ax.shape[1]):
