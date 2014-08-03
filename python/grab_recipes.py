@@ -39,8 +39,9 @@ while len(matches) < 500:  # can only return 500 at a time, otherwise yummly kic
     nmatches = 0
     for match in search.matches:
         if match.rating >= 4:  # only keep the good recipes
-            matches.append(match)
-            nmatches += 1
+            if match.flavors['salty'] is not None:  # only keep recipes with flavor profiles
+                matches.append(match)
+                nmatches += 1
 
     print 'Found', nmatches, 'this call.'
     ncalls += 1
