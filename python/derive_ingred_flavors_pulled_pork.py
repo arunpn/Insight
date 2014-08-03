@@ -1,7 +1,6 @@
 __author__ = 'brandonkelly'
 
 import numpy as np
-import matplotlib.pyplot as plt
 import cPickle
 import pandas as pd
 import os
