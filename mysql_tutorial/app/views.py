@@ -22,3 +22,15 @@ def cities_page():
         cities += result[0]
         cities += "<br>"
     return cities
+
+@app.route("/db_fancy")
+def cities_page_fancy():
+    with db:
+        cur = db.cursor()
+        cur.execute("SELECT Name, CountryCode, Population FROM city ORDER BY Population LIMIT 15;")
+
+        query_results = cur.fetchall()
+    cities = []
+    for result in query_results:
+        cities.append(dict(name=result[0], country=result[1], population=result[2]))
+    return render_template('cities.html', cities=cities)
