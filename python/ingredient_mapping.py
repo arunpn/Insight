@@ -116,7 +116,7 @@ class IngredientMapping(dict):
             ingredients[i] = ingredients[i].lower()
 
         # find which of the new ingredients have not been seen before
-        new_ingredients = set(self.keys()) - set(ingredients)
+        new_ingredients = set(ingredients) - set(self.keys())
 
         # add the new ingredients
         for ingredient in new_ingredients:
@@ -178,12 +178,25 @@ if __name__ == "__main__":
     for match in search:
         ingredients.extend(match.ingredients)
 
-    sauce = ingredients.pop('sauce')
-    filet = ingredients.pop('filet')
-    jelly = ingredients.pop('jelly')
-    juice = ingredients.pop('juice')
+    ingredients1 = ingredients[:50]
+    ingredients2 = ingredients[50:100]
 
     IngMap = IngredientMapping()
-    IngMap.create_ingredient_map(ingredients)
+    print 'Creating ingredient map for first half...'
+    IngMap.create_ingredient_map(ingredients1)
+    print 'Adding ingredients from second half...'
+    IngMap.add_ingredients(ingredients2)
+
+    IngMap0 = IngredientMapping()
+    print 'Creating ingredient mapping for all ingredients...'
+    IngMap0.create_ingredient_map(ingredients[:100])
+
+    ingredients1 = set(IngMap.keys())
+    ingredients2 = set(IngMap0.keys())
+    assert len(ingredients2 - ingredients1) == 0
+    assert len(ingredients1 - ingredients2) == 0
+
+    for ingredient in ingredients1:
+        assert IngMap[ingredient] == IngMap0[ingredient]
 
     cPickle.dump(IngMap, open('/Users/brandonkelly/Projects/Insight/data/yummly/ingredient_map_test.pickle', 'wb'))
