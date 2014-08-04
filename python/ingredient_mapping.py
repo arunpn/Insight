@@ -5,6 +5,8 @@ import numpy as np
 
 class IngredientMapping(dict):
 
+    ignore_ingredients = ['sauce', 'filet', 'jelly', 'juice']
+
     def merge_ingredient_pair(self, ingredient, base_ingredient):
         """
         Prompt the user for input on whether two ingredients are really the same thing. If they are, then the ingredient
@@ -63,9 +65,11 @@ class IngredientMapping(dict):
                 if ingredient in self.keys():
                     # make sure this ingredient is not already mapped to a different ingredient
                     if ingredient == self[ingredient]:
-                        self.merge_ingredient_pair(ingredient, base_ingredient)
+                        if base_ingredient not in self.ignore_ingredients:
+                            self.merge_ingredient_pair(ingredient, base_ingredient)
                 else:
-                    self.merge_ingredient_pair(ingredient, base_ingredient)
+                    if base_ingredient not in self.ignore_ingredients:
+                        self.merge_ingredient_pair(ingredient, base_ingredient)
 
         return
 
@@ -76,6 +80,8 @@ class IngredientMapping(dict):
         :param ingredient_list: The list of ingredients to base the mapping on.
         """
         ingredients = np.unique(ingredient_list)
+        for i in range(len(ingredients)):
+            ingredients[i] = ingredients[i].lower()
 
         # add all of the single word ingredients to the mapping, since there should be no duplicates
         self.add_single_word_ingredients(ingredients)
@@ -103,6 +109,65 @@ class IngredientMapping(dict):
 
         return
 
+    def add_ingredients(self, ingredient_list):
+
+        ingredients = np.unique(ingredient_list)
+        for i in range(len(ingredients)):
+            ingredients[i] = ingredients[i].lower()
+
+        # find which of the new ingredients have not been seen before
+        new_ingredients = set(self.keys()) - set(ingredients)
+
+        # add the new ingredients
+        for ingredient in new_ingredients:
+            self[ingredient] = ingredient
+
+        # find all of the ingredients that map to the same name, test for duplicates
+        potential_matches = set()
+        for ingredient in self.keys():
+            if self[ingredient] == ingredient:
+                potential_matches.add(ingredient)
+
+        # add to the ingredient map by first iterating over all ingredients whose name is a single word, prompting
+        # the user for duplicates, then by iterating over all ingredients whose name has two words, etc.
+
+        active_set = set()
+        for ingredient in potential_matches:
+            nwords = len(ingredient.split())
+            if nwords == 1:
+                active_set.add(ingredient)
+
+        inactive_set = potential_matches - active_set
+        while len(active_set) > 0:
+
+            for ingredient in active_set:
+                self.consolidate_ingredients(inactive_set, ingredient)
+            nwords = len(ingredient.split())
+            # find all ingredients with names containing one more word than the current active set. this is the new
+            # active set
+            active_set = set()
+            for ingredient in inactive_set:
+                if len(ingredient.split()) == nwords + 1:
+                    active_set.add(ingredient)
+
+        return
+
+    def map_ingredients(self, ingredients):
+        """
+        Map the input ingredient list onto the ingredient map.
+
+        :param ingredients: A list of ingredient names.
+        :return: A list of the ingredient names, corrected for duplicates.
+        """
+        mapped = []
+        for ingredient in ingredients:
+            if ingredient in self.keys():
+                mapped.append(self[ingredient])
+            else:
+                mapped.append(ingredient)
+
+        return mapped
+
 
 if __name__ == "__main__":
     # test usage
@@ -113,7 +178,12 @@ if __name__ == "__main__":
     for match in search:
         ingredients.extend(match.ingredients)
 
+    sauce = ingredients.pop('sauce')
+    filet = ingredients.pop('filet')
+    jelly = ingredients.pop('jelly')
+    juice = ingredients.pop('juice')
+
     IngMap = IngredientMapping()
-    IngMap.create_ingredient_map(ingredients[:50])
+    IngMap.create_ingredient_map(ingredients)
 
     cPickle.dump(IngMap, open('/Users/brandonkelly/Projects/Insight/data/yummly/ingredient_map_test.pickle', 'wb'))
