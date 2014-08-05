@@ -3,7 +3,7 @@ __author__ = 'brandonkelly'
 import pymysql as mdb
 
 con = mdb.connect('localhost', 'root', '', 'testdb')  # host, user, password, #database
-
+cur = con.cursor()
 with con:
     cur = con.cursor()
     cur.execute("DROP TABLE IF EXISTS Writers")
