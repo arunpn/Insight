@@ -1,6 +1,8 @@
+from __future__ import unicode_literals
 __author__ = 'brandonkelly'
 
 import numpy as np
+import pymysql
 
 
 class IngredientMapping(dict):
@@ -18,11 +20,11 @@ class IngredientMapping(dict):
         merge = ''
         while True:
             merge = raw_input('Are ' + ingredient + ' and ' + base_ingredient + ' the same [y/n]? ')
-            try:
-                merge.lower() in ['y', 'yes', 'n', 'no']
-                break
-            except ValueError:
+            if not merge.lower() in ['y', 'yes', 'n', 'no']:
                 print('Please choose either "y" or "n".')
+                continue
+            else:
+                break
 
         if merge.lower() in ['y', 'yes']:
             # the two ingredients are the same
@@ -80,6 +82,7 @@ class IngredientMapping(dict):
         :param ingredient_list: The list of ingredients to base the mapping on.
         """
         ingredients = np.unique(ingredient_list)
+        print 'Found', len(ingredients), 'unique ingredients.'
         for i in range(len(ingredients)):
             ingredients[i] = ingredients[i].lower()
 
@@ -91,7 +94,8 @@ class IngredientMapping(dict):
         while len(active_set) > 0:
             # create the ingredient map by first iterating over all ingredients whose name is a single word, prompting
             # the user for duplicates, then by iterating over all ingredients whose name has two words, etc.
-            for ingredient in active_set:
+            for i, ingredient in enumerate(active_set):
+                print 'Doing active set ingredient', i, 'out of', len(active_set), '...'
                 self.consolidate_ingredients(inactive_set, ingredient)
             nwords = len(ingredient.split())
             # find all ingredients with names containing one more word than the current active set. this is the new
@@ -117,6 +121,7 @@ class IngredientMapping(dict):
 
         # find which of the new ingredients have not been seen before
         new_ingredients = set(ingredients) - set(self.keys())
+        print 'Found', len(ingredients), 'unique ingredients, of which', len(new_ingredients), 'are new.'
 
         # add the new ingredients
         for ingredient in new_ingredients:
@@ -168,17 +173,47 @@ class IngredientMapping(dict):
 
         return mapped
 
+    def to_mysql(self, table, clobber=False, host='localhost', user='root', passwd='', database='recipes'):
+        """
+        Store the ingredient mapping to a MySQL database. If the database already exists, then any values not already
+         in the database will be added.
+
+        :param table: The name of the table containing the ingredient map.
+        :param clobber: If true, then delete the current table, if it exists.
+        """
+        conn = pymysql.connect(host, user, passwd, database, autocommit=True, charset='utf8')
+        cur = conn.cursor()
+        if clobber:
+            cur.execute("DROP TABLE IF EXISTS " + table)
+            cur.execute("CREATE TABLE " + table +
+                        "(Yummly_Ingredient VARCHAR(100) PRIMARY KEY, Ingredient VARCHAR(100))")
+        else:
+            # check if table exists. if it does not, create a new table
+            cur.execute("CREATE TABLE IF NOT EXISTS " + table +
+                        "(Yummly_Ingredient VARCHAR(100) PRIMARY KEY, Ingredient VARCHAR(100))")
+
+        cur.execute("SELECT Yummly_Ingredient FROM " + table)
+        rows = cur.fetchall()
+        yingredients = []
+        for row in rows:
+            yingredients.append(row[0])
+        new_ingredients = set(self.keys()) - set(yingredients)
+        print 'Found', len(new_ingredients), 'ingredients not in the MySQL database. Adding them...'
+        for ingredient in new_ingredients:
+            cur.execute("INSERT INTO " + table + " VALUES('" + ingredient + "', '" + self[ingredient] + "')")
+
 
 if __name__ == "__main__":
     # test usage
-    import cPickle
-    search = cPickle.load(open('/Users/brandonkelly/Projects/Insight/data/yummly/sauce_search.pickle', 'rb'))
-
+    conn = pymysql.connect('localhost', 'root', '', 'recipes', charset='utf8')
+    cur = conn.cursor()
+    cur.execute("SELECT Ingredient from Ingredient_List LIMIT 1000")
+    rows = cur.fetchall()
     ingredients = []
-    for match in search:
-        ingredients.extend(match.ingredients)
+    for row in rows:
+        ingredients.append(row[0].lower())
 
-    ingredients1 = ingredients[:50]
+    ingredients1 = ingredients[0:50]
     ingredients2 = ingredients[50:100]
 
     IngMap = IngredientMapping()
@@ -199,4 +234,4 @@ if __name__ == "__main__":
     for ingredient in ingredients1:
         assert IngMap[ingredient] == IngMap0[ingredient]
 
-    cPickle.dump(IngMap, open('/Users/brandonkelly/Projects/Insight/data/yummly/ingredient_map_test.pickle', 'wb'))
+    IngMap.to_mysql("Ingredient_Map", clobber=False)

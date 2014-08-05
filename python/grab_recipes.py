@@ -76,3 +76,5 @@ for id, yummly_id in recipe_ids[:max_api_calls]:
     this_pause_secs = pause_secs + np.random.uniform(-0.5, 0.5)
     time.sleep(pause_secs)  # don't make too many calls to the API in rapid succession
     i += 1
+
+conn.close()
