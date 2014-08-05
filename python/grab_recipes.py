@@ -9,6 +9,7 @@ import cPickle
 import numpy as np
 import os
 import pymysql
+from pymysql import err
 
 base_dir = os.environ['HOME'] + '/Projects/Insight/'
 data_dir = base_dir + 'data/yummly/'
@@ -56,9 +57,18 @@ for id, yummly_id in recipe_ids[:max_api_calls]:
     # add this recipe to the database
     if recipe['yields'] is not None:
         # only use recipes that have a known yield, since we need this when computing the ingredient flavor profiles
-        cur.execute("INSERT INTO Yields VALUES(%s, %s)", (id, recipe['yields']))
+        try:
+            cur.execute("INSERT INTO Yields VALUES(%s, %s)", (id, recipe['yields']))
+        except err.MySQLError:
+            print "Error encountered when trying to enter Yield, just using NULL."
+            cur.execute("INSERT INTO Yields VALUES(%s, %s)", (id, "NULL"))
+
         for line in recipe['ingredientLines']:
-            cur.execute("INSERT INTO Recipe_Lines VALUES(%s, %s)", (id, line))
+            try:
+                cur.execute("INSERT INTO Recipe_Lines VALUES(%s, %s)", (id, line))
+            except err.MySQLError:
+                print "Error encountered when trying to enter recipe line, just using NULL."
+                cur.execute("INSERT INTO Recipe_Lines VALUES(%s, %s)", (id, "NULL"))
     else:
         cur.execute("INSERT INTO Yields VALUES(%s, %s)", (id, "NULL"))
         cur.execute("INSERT INTO Recipe_Lines VALUES(%s, %s)", (id, "NULL"))
