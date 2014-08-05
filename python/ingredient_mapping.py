@@ -202,6 +202,8 @@ class IngredientMapping(dict):
         for ingredient in new_ingredients:
             cur.execute("INSERT INTO " + table + " VALUES('" + ingredient + "', '" + self[ingredient] + "')")
 
+        conn.close()
+
 
 if __name__ == "__main__":
     # test usage

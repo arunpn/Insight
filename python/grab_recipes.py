@@ -10,6 +10,7 @@ import numpy as np
 import os
 import pymysql
 from pymysql import err
+from requests.exceptions import HTTPError
 
 base_dir = os.environ['HOME'] + '/Projects/Insight/'
 data_dir = base_dir + 'data/yummly/'
@@ -17,7 +18,7 @@ data_dir = base_dir + 'data/yummly/'
 api_id = '50fd16ec'
 api_key = '4f425532cc37ac4ef290004ceb2e6cb3'
 
-max_api_calls = 5000 - 120
+max_api_calls = 5000 - 4100
 search_term = 'sauce'
 
 client = yummly.Client(api_id=api_id, api_key=api_key, timeout=120.0, retries=0)
@@ -53,7 +54,10 @@ pause_secs = 1
 i = 0
 for id, yummly_id in recipe_ids[:max_api_calls]:
     print i, '    ', id, '...', yummly_id
-    recipe = client.recipe(yummly_id)
+    try:
+        recipe = client.recipe(yummly_id)
+    except HTTPError:
+        continue
     # add this recipe to the database
     if recipe['yields'] is not None:
         # only use recipes that have a known yield, since we need this when computing the ingredient flavor profiles
