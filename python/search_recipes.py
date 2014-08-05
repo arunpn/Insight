@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 __author__ = 'brandonkelly'
 
 import yummly
@@ -14,7 +16,7 @@ data_dir = base_dir + 'data/yummly/'
 api_id = '50fd16ec'
 api_key = '4f425532cc37ac4ef290004ceb2e6cb3'
 
-max_api_calls = 500 - 264
+max_api_calls = 5000 - 3
 search_term = 'sauce'
 
 included_courses0 = ['Condiments and Sauces']
@@ -31,7 +33,7 @@ params = {'q': search_term, 'includedCourse[]': included_courses, 'maxResult': 5
 client = yummly.Client(api_id=api_id, api_key=api_key, timeout=120.0, retries=0)
 
 # connect to the mysql server and create the tables
-conn = pymysql.connect('localhost', 'root', '', 'recipes', autocommit=True)
+conn = pymysql.connect('localhost', 'root', '', 'recipes', autocommit=True, charset='utf8')
 cur = conn.cursor()
 cur.execute("DROP TABLE IF EXISTS Recipe_IDs")
 cur.execute("CREATE TABLE Recipe_IDs(Id INT NOT NULL, YummlyID VARCHAR(200), PRIMARY KEY(Id))")
@@ -50,7 +52,7 @@ cur.execute("""CREATE TABLE Recipe_Attributes(Id INT PRIMARY KEY,
 
 print 'Getting search results...'
 matches = []
-max_matches = 20
+max_matches = 21000
 nmatches_total = 0
 ncalls = 0
 
@@ -74,6 +76,7 @@ if debug:
     exit()
 
 match_id = 0
+nsaved = 0
 while nmatches_total < max_matches:  # can only return 500 at a time, otherwise yummly kicks me off
     try:
         search = client.search(**params)
@@ -94,8 +97,9 @@ while nmatches_total < max_matches:  # can only return 500 at a time, otherwise 
                         match.flavors.sour, match.flavors.bitter, match.flavors.piquant))
             match_id += 1
             nmatches += 1
+            nsaved += 1
 
-    print 'Found', nmatches, 'this call. New total is', len(matches)
+    print 'Found', nmatches, 'this call. New total is', nsaved
     ncalls += 1
     print 'Did', ncalls, 'calls...'
 

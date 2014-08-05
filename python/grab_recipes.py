@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 __author__ = 'brandonkelly'
 
 import yummly
@@ -14,13 +16,12 @@ data_dir = base_dir + 'data/yummly/'
 api_id = '50fd16ec'
 api_key = '4f425532cc37ac4ef290004ceb2e6cb3'
 
-max_api_calls = 500
-max_api_calls = 5
+max_api_calls = 5000 - 120
 search_term = 'sauce'
 
-client = yummly.Client(api_id=api_id, api_key=api_key, timeout=60.0, retries=0)
+client = yummly.Client(api_id=api_id, api_key=api_key, timeout=120.0, retries=0)
 
-conn = pymysql.connect("localhost", "root", "", "recipes", autocommit=True)
+conn = pymysql.connect("localhost", "root", "", "recipes", autocommit=True, charset='utf8')
 cur = conn.cursor()
 cur.execute("CREATE TABLE IF NOT EXISTS Yields(Id INT PRIMARY KEY, Yield VARCHAR(100))")
 cur.execute("CREATE TABLE IF NOT EXISTS Recipe_Lines(Id INT, Line VARCHAR(200))")
