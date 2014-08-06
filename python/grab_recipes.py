@@ -18,7 +18,7 @@ data_dir = base_dir + 'data/yummly/'
 api_id = '50fd16ec'
 api_key = '4f425532cc37ac4ef290004ceb2e6cb3'
 
-max_api_calls = 5000 - 4100
+max_api_calls = 5000 - 50
 search_term = 'sauce'
 
 client = yummly.Client(api_id=api_id, api_key=api_key, timeout=120.0, retries=0)
