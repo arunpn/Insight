@@ -5,6 +5,19 @@ import numpy as np
 import pymysql
 
 
+def check_unicode(value):
+    if type(value) == str:
+        # Ignore errors even if the string is not proper UTF-8 or has
+        # broken marker bytes.
+        # Python built-in function unicode() can do this.
+        value = unicode(value, "utf-8", errors="ignore")
+    else:
+        # Assume the value object has proper __unicode__() method
+        value = unicode(value)
+
+    return value
+
+
 class IngredientMapping(dict):
 
     ignore_ingredients = ['sauce', 'filet', 'jelly', 'juice']
@@ -19,6 +32,8 @@ class IngredientMapping(dict):
         """
         merge = ''
         while True:
+            ingredient = check_unicode(ingredient).encode('ascii', 'ignore')
+            base_ingredient = check_unicode(base_ingredient).encode('ascii', 'ignore')
             merge = raw_input('Are ' + ingredient + ' and ' + base_ingredient + ' the same [y/n]? ')
             if not merge.lower() in ['y', 'yes', 'n', 'no']:
                 print('Please choose either "y" or "n".')
