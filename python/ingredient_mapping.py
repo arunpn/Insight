@@ -1,8 +1,10 @@
 from __future__ import unicode_literals
+
 __author__ = 'brandonkelly'
 
 import numpy as np
 import pymysql
+from pymysql import err
 
 
 def check_unicode(value):
@@ -19,8 +21,25 @@ def check_unicode(value):
 
 
 class IngredientMapping(dict):
+    ignore_ingredients = ['sauce', 'filet', 'jelly', 'juice', 'preserves', 'dressing', 'fat', 'seasoning',
+                          'marinade', 'soup', 'vinegar', 'crumbles', 'vegetarian', 'spices', 'liqueur',
+                          'chunky', 'rub', 'dairy', 'broth', 'salad', 'stock', 'dough', 'crumbs', 'meat',
+                          'extract', 'red', 'base', 'shells', 'fruit', 'cheese', 'syrup', 'cereal', 'fillets',
+                          'wine', 'soda', 'jam', 'muffin', 'rice', 'breast', 'chips', 'topping', 'ice', 'roast',
+                          'liquid', 'crust', 'seeds', 'soy', 'gluten', 'bouillon']
 
-    ignore_ingredients = ['sauce', 'filet', 'jelly', 'juice']
+    # incorrectly said sweet potatoes and potatoes are the same
+    # merge stock and broth
+    # merge mustard and dijon
+    # merge olives and green olives
+    # rename pepper to black pepper
+    # merge shichimi
+    # fix red chile sauce mapping to just 'red chile sauce'
+    # merge all the yogurts
+    # merge bell peppers ['green bell pepper', 'green pepper', etc.
+    # merge diced tomatoes and tomatoes
+    # merge wine vinegars
+    # merge the mozzarella
 
     def merge_ingredient_pair(self, ingredient, base_ingredient):
         """
@@ -215,7 +234,11 @@ class IngredientMapping(dict):
         new_ingredients = set(self.keys()) - set(yingredients)
         print 'Found', len(new_ingredients), 'ingredients not in the MySQL database. Adding them...'
         for ingredient in new_ingredients:
-            cur.execute("INSERT INTO " + table + " VALUES('" + ingredient + "', '" + self[ingredient] + "')")
+            try:
+                cur.execute("INSERT INTO " + table + " VALUES('" + ingredient + "', '" + self[ingredient] + "')")
+            except err.MySQLError:
+                print "Error encountered when trying to insert (" + ingredient + ", " + self[ingredient] + ") pair," + \
+                      "skipping."
 
         conn.close()
 

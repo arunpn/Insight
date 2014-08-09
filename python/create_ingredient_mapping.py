@@ -2,6 +2,11 @@ __author__ = 'brandonkelly'
 
 from ingredient_mapping import IngredientMapping
 import pymysql
+import cPickle
+import os
+
+base_dir = os.environ['HOME'] + '/Projects/Insight/'
+data_dir = base_dir + 'data/yummly/'
 
 conn = pymysql.connect('localhost', 'root', '', 'recipes', charset='utf8')
 cur = conn.cursor()
@@ -13,6 +18,8 @@ for row in rows:
 
 IngMap = IngredientMapping()
 print 'Creating ingredient mapping for all ingredients...'
-IngMap.create_ingredient_map(ingredients)
+IngMap.create_ingredient_map(ingredients[:10])
+
+cPickle.dump(IngMap, open(data_dir + 'ingredient_map_backup.pickle', 'wb'))
 
 IngMap.to_mysql("Ingredient_Map", clobber=True)
