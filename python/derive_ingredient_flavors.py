@@ -105,14 +105,31 @@ if __name__ == "__main__":
         for ingredient in these_ingredients:
             X[i, uingredients == ingredient] = 1.0
 
-    salt_columns = []  # force any salt or sugar ingredients to be only salty or sweet
+    # hard code common ingredients, necessary to anchor the derived profiles
+    salt_columns = []
     sugar_columns = []
+    nuetral_columns = []
+    nuetral_ingredients = ['oil', 'water', 'noodles', 'pasta', 'olive oil', 'butter', 'rice', 'rolls', 'white rice',
+                           'brown rice', 'coconut oil', 'bread', 'buns', 'pasta']
     fit_columns = []
     for j, ingredient in enumerate(uingredients):
         if ' salt' in ingredient or 'salt ' in ingredient or ' salt ' in ingredient or ingredient == 'salt':
             salt_columns.append(j)
         elif ' sugar' in ingredient or 'sugar ' in ingredient or ' sugar ' in ingredient or ingredient == 'sugar':
             sugar_columns.append(j)
+        elif ' stevia' in ingredient or 'stevia ' in ingredient or ' stevia ' in ingredient or ingredient == 'stevia':
+            sugar_columns.append(j)
+        elif ' sweetener' in ingredient or 'sweetener ' in ingredient or ' sweetener ' in ingredient or \
+                        ingredient == 'sweetener':
+            sugar_columns.append(j)
+        elif ' splenda' in ingredient or 'splenda ' in ingredient or ' splenda ' in ingredient or \
+                        ingredient == 'splenda':
+            sugar_columns.append(j)
+        elif ' candy' in ingredient or 'candy ' in ingredient or ' candy ' in ingredient or \
+                        ingredient == 'candy':
+            sugar_columns.append(j)
+        elif ingredient in nuetral_ingredients or 'olive oil' in ingredient:
+            nuetral_columns.append(j)
         else:
             fit_columns.append()
 
@@ -139,6 +156,7 @@ if __name__ == "__main__":
     flavors[flavors < 0] = 0.0  # keep flavor profiles positive
     remove_columns = list(salt_columns)
     remove_columns.extend(sugar_columns)
+    remove_columns.extend(nuetral_columns)
     X = np.delete(X, remove_columns, axis=1)  # remove columns where we forced the salty and sweet values
 
     if model == 'nnls':
@@ -151,11 +169,13 @@ if __name__ == "__main__":
     weights_salt[:, 0] = 1.0
     weights_sugar = np.zeros_like(weights_salt)
     weights_sugar[:, 1] = 1.0
-    weights = np.vstack((weights, weights_salt, weights_sugar))
+    weights_nuetral = np.zeros_like(weights_salt)
+    weights = np.vstack((weights, weights_salt, weights_sugar, weights_nuetral))
 
     ingredient_names = fit_columns
     ingredient_names.extend(salt_columns)
     ingredient_names.extend(sugar_columns)
+    ingredient_names.extend(nuetral_columns)
 
     fit, axs = plt.subplots(2, 3)
     f_idx = 0

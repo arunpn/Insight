@@ -26,20 +26,7 @@ class IngredientMapping(dict):
                           'chunky', 'rub', 'dairy', 'broth', 'salad', 'stock', 'dough', 'crumbs', 'meat',
                           'extract', 'red', 'base', 'shells', 'fruit', 'cheese', 'syrup', 'cereal', 'fillets',
                           'wine', 'soda', 'jam', 'muffin', 'rice', 'breast', 'chips', 'topping', 'ice', 'roast',
-                          'liquid', 'crust', 'seeds', 'soy', 'gluten', 'bouillon']
-
-    # incorrectly said sweet potatoes and potatoes are the same
-    # merge stock and broth
-    # merge mustard and dijon
-    # merge olives and green olives
-    # rename pepper to black pepper
-    # merge shichimi
-    # fix red chile sauce mapping to just 'red chile sauce'
-    # merge all the yogurts
-    # merge bell peppers ['green bell pepper', 'green pepper', etc.
-    # merge diced tomatoes and tomatoes
-    # merge wine vinegars
-    # merge the mozzarella
+                          'liquid', 'crust', 'seeds', 'soy', 'gluten', 'bouillon', 'dessert']
 
     def merge_ingredient_pair(self, ingredient, base_ingredient):
         """
