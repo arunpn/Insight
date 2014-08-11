@@ -109,9 +109,9 @@ if __name__ == "__main__":
     sugar_columns = []
     fit_columns = []
     for j, ingredient in enumerate(uingredients):
-        if ' salt' in ingredient or 'salt ' in ingredient or ' salt ' in ingredient:
+        if ' salt' in ingredient or 'salt ' in ingredient or ' salt ' in ingredient or ingredient == 'salt':
             salt_columns.append(j)
-        elif ' sugar' in ingredient or 'sugar ' in ingredient or ' sugar ' in ingredient:
+        elif ' sugar' in ingredient or 'sugar ' in ingredient or ' sugar ' in ingredient or ingredient == 'sugar':
             sugar_columns.append(j)
         else:
             fit_columns.append()
