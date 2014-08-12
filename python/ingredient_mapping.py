@@ -229,6 +229,32 @@ class IngredientMapping(dict):
 
         conn.close()
 
+    def from_mysql(self, table, host='localhost', user='root', passwd='', database='recipes', clear=True):
+        """
+        Load the ingredient mapping from a MySQL database.
+
+        :param table: The name of the table containing the ingredient mapping data.
+        :param host: The database host.
+        :param user: The name of the user accessing the database.
+        :param passwd: The password of the user accessing the database.
+        :param database: The name of the database.
+        :param clear: If true, then clear the current key-value pairs.
+        :return: self
+        """
+        conn = pymysql.connect(host, user, passwd, database, charset='utf8')
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM " + table)
+        rows = cur.fetchall()
+        if clear:
+            self.clear()  # clear the current key-value pairs
+        for row in rows:
+            self[row[0]] = row[1]
+
+        cur.close()
+        conn.close()
+
+        return self
+
 
 if __name__ == "__main__":
     # test usage
