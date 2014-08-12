@@ -62,8 +62,24 @@ class IngredientGraph(PMIGraph):
 
         return X
 
-    def graph_to_mysql(self, graph):
+    def graph_to_mysql(self):
         conn = pymysql.connect(self.host, self.user, self.passwd, self.database)
+        cur = conn.cursor()
+        cur.execute("DROP TABLE IF NOT EXISTS Ingredient_Graph")
+        cur.execute("CREATE TABLE Ingredient_Graph(Ingredient1 VARCHAR(200), Ingredient2 VARCHAR(200), PMI FLOAT)")
+        ningredients = len(self.ingredient_names)
+        sql = "INSERT INTO Ingredient_Graph VALUES('"
+        for j in xrange(ningredients-1):
+            for k in xrange(j+1, ningredients):
+                try:
+                    cur.execute(sql + self.ingredient_names[j] + "', '" + self.ingredient_names[k] + "', '" +
+                                str(self.pmi[j, k]) + ")")
+                except MySQLError:
+                    print "Error when trying to insert ingredient pair (" + self.ingredient_names[j] + ', ' + \
+                          self.ingredient_names[k] + ") into MySQL table. Skipping this pair."
+
+        cur.close()
+        conn.close()
 
 
 if __name__ == "__main__":
