@@ -37,9 +37,9 @@ class IngredientGraph(PMIGraph):
         for id, yummly_ingredient in rows:
             recipe_ids.append(id)
             try:
-                ingredients.append(self.imap[yummly_ingredient])
+                ingredients.append(self.imap[yummly_ingredient.lower()])
             except KeyError:
-                ingredients.append(yummly_ingredient)
+                ingredients.append(yummly_ingredient.lower())
 
         return recipe_ids, ingredients
 
@@ -56,7 +56,7 @@ class IngredientGraph(PMIGraph):
 
         current_id = recipe_ids[0]
         r_idx = 0
-        for id, ingredient in zip(recipe_ids, unique_ingredients):
+        for id, ingredient in zip(recipe_ids, ingredients):
             if id != current_id:
                 current_id = id
                 r_idx += 1
@@ -66,22 +66,24 @@ class IngredientGraph(PMIGraph):
         return X
 
     def graph_to_mysql(self):
-        conn = pymysql.connect(self.host, self.user, self.passwd, self.database)
-        cur = conn.cursor()
-        cur.execute("DROP TABLE IF NOT EXISTS Ingredient_Graph")
-        cur.execute("CREATE TABLE Ingredient_Graph(Ingredient1 VARCHAR(200), Ingredient2 VARCHAR(200), PMI FLOAT)")
+        if self.ingredient_names is None:
+            raise RuntimeError("Must run self.build_design_matrix() before dumping to MySQL.")
         ningredients = len(self.ingredient_names)
+        conn = pymysql.connect(self.host, self.user, self.passwd, self.database, charset='utf8', autocommit=True)
+        cur = conn.cursor()
+        cur.execute("DROP TABLE IF EXISTS Ingredient_Graph")
+        cur.execute("CREATE TABLE Ingredient_Graph(Ingredient1 VARCHAR(200), Ingredient2 VARCHAR(200), PMI FLOAT)")
         sql = "INSERT INTO Ingredient_Graph VALUES('"
         for j in xrange(ningredients-1):
             for k in xrange(j+1, ningredients):
+                sql_command = sql + self.ingredient_names[j] + "', '" + self.ingredient_names[k] + "', " + \
+                    str(self.pmi[j, k]) + ")"
                 try:
-                    cur.execute(sql + self.ingredient_names[j] + "', '" + self.ingredient_names[k] + "', '" +
-                                str(self.pmi[j, k]) + ")")
+                    cur.execute(sql_command)
                 except MySQLError:
                     print "Error when trying to insert ingredient pair (" + self.ingredient_names[j] + ', ' + \
                           self.ingredient_names[k] + ") into MySQL table. Skipping this pair."
 
-        cur.close()
         conn.close()
 
 
@@ -90,11 +92,13 @@ if __name__ == "__main__":
     data_dir = base_dir + 'data/yummly/'
     plot_dir = base_dir + 'plots/'
 
-    graph = IngredientGraph(verbose=True)
+    graph = IngredientGraph()
     graph.load_ingredient_map()
-    ids, ingredients = graph.load_ingredients(limit=2000)
+    ids, ingredients = graph.load_ingredients()
     X = graph.build_design_matrix(ids, ingredients)
-    graph = fit_pmi_graph_cv(X, verbose=True, n_jobs=1, cv=4, doplot=True, graph=graph)
+    graph = fit_pmi_graph_cv(X, verbose=True, n_jobs=7, cv=7, doplot=True, graph=graph)
+
+    X = graph.build_design_matrix(ids, ingredients)  # need to do this here since graph returned above is not the same
 
     cPickle.dump(graph, open(data_dir + 'ingredient_graph.pickle', 'wb'))
 

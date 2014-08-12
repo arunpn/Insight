@@ -43,7 +43,7 @@ class PMIGraph(BaseEstimator):
         nsamples, nfeatures = X.shape
 
         # first get number of times each feature occured in a sample
-        self.train_marginal = X.sum(axis=0, dtype=int)
+        self.train_marginal = X.sum(axis=0).astype(np.int) + 1
 
         # now find number of times a pair of features appeared in a sample
         self.train_pairs = np.zeros((nfeatures, nfeatures), dtype=int)
@@ -52,15 +52,16 @@ class PMIGraph(BaseEstimator):
         if self.verbose:
             print 'Finding pairs involving column:'
         for j in xrange(nfeatures - 1):
-            print '  ', j + 1, '...'
+            if self.verbose:
+                print '  ', j + 1, '...'
             active_set1 = X[:, j] == 1
             for k in xrange(j + 1, nfeatures):
                 active_set2 = X[:, k] == 1
                 pairs = np.logical_and(active_set1, active_set2)
                 self.train_pairs[j, k] = np.sum(pairs)
                 # prior probability is equal to that expected assuming statistical independence
-                marginal_prob1 = self.train_marginal[j] / float(nsamples)
-                marginal_prob2 = self.train_marginal[k] / float(nsamples)
+                marginal_prob1 = self.train_marginal[j] / float(nsamples + 1)
+                marginal_prob2 = self.train_marginal[k] / float(nsamples + 1)
                 prior_prob = marginal_prob1 * marginal_prob2
                 # estimated joint probability is posterior expectation under a beta prior
                 self.joint_probs[j, k] = (self.train_pairs[j, k] + prior_prob * self.nprior) / (nsamples + self.nprior)
@@ -93,7 +94,8 @@ class PMIGraph(BaseEstimator):
             print 'Counting pairs for column:'
         # find number of times a pair of features appeared in a sample
         for j in xrange(nfeatures - 1):
-            print '  ', j + 1, '...'
+            if self.verbose:
+                print '  ', j + 1, '...'
             active_set1 = X[:, j] == 1
             for k in xrange(j + 1, nfeatures):
                 active_set2 = X[:, k] == 1
@@ -110,6 +112,7 @@ class PMIGraph(BaseEstimator):
 
 
 def fit_pmi_graph_cv(X, verbose=False, n_jobs=1, cv=7, doplot=False, graph=None):
+    nsamples, nfeatures = X.shape
     if graph is None:
         graph = PMIGraph()
     param_grid = {'nprior': np.logspace(0.0, np.log10(100 * nsamples), 20)}  # the prior sample sizes
