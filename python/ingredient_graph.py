@@ -1,12 +1,12 @@
 __author__ = 'brandonkelly'
 
 import numpy as np
-from pmi_graph import PMIGraph
-from sklearn.grid_search import GridSearchCV
+from pmi_graph import PMIGraph, fit_pmi_graph_cv
 from ingredient_mapping import IngredientMapping
 import pymysql
 from pymysql.err import MySQLError
 import os
+import cPickle
 
 
 class IngredientGraph(PMIGraph):
@@ -24,10 +24,13 @@ class IngredientGraph(PMIGraph):
         self.imap = IngredientMapping().from_mysql(table, host=self.host, user=self.user, passwd=self.passwd,
                                                    database=self.database)
 
-    def load_ingredients(self, table='Ingredient_List'):
+    def load_ingredients(self, table='Ingredient_List', limit=None):
         conn = pymysql.connect(self.host, self.user, self.passwd, self.database, charset='utf8')
         cur = conn.cursor()
-        cur.execute("SELECT * FROM " + table)
+        sql = "SELECT * FROM " + table
+        if limit is not None:
+            sql += " LIMIT " + str(limit)
+        cur.execute(sql)
         rows = cur.fetchall()
         recipe_ids = []
         ingredients = []
@@ -87,3 +90,12 @@ if __name__ == "__main__":
     data_dir = base_dir + 'data/yummly/'
     plot_dir = base_dir + 'plots/'
 
+    graph = IngredientGraph(verbose=True)
+    graph.load_ingredient_map()
+    ids, ingredients = graph.load_ingredients(limit=2000)
+    X = graph.build_design_matrix(ids, ingredients)
+    graph = fit_pmi_graph_cv(X, verbose=True, n_jobs=1, cv=4, doplot=True, graph=graph)
+
+    cPickle.dump(graph, open(data_dir + 'ingredient_graph.pickle', 'wb'))
+
+    graph.graph_to_mysql()
