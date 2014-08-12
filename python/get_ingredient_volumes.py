@@ -5,12 +5,35 @@ import pymysql
 
 
 class MeasurementParser(object):
+    # valid units of measurement
+    units = ['cup', 'cups', 'teaspoon', 'tablespoon', 'tablespoons', 'teaspoons', 'ounces', 'tsp.', 'tsp', 'pound',
+             'tbsp', 'Tbs.', 'lb', 'tbsp.', 'pounds', 'Tbsp', 'lb.', 'Tbsp.', 'cup(s)', 'Tablespoons', 'pinch', 'oz',
+             'Tablespoon', 'tablespoon(s)', 'T', 'bunch', 'g', 'lbs', 'dash', 'oz.', 'ounce', 'ml', 'gr.',
+             'sprigs', 'Cup', 'pint', 'Tbs', 'TBS', 'dashes', 'grams', 'quarts', 'tbsps.', 'lbs.', 'drops', 'wedges',
+             'C', 'c', 'pound(s)', 'Tb.', 'c.', 'ounce(s)', 't', 'tbs', 'Teaspoon']
+
+    # map to unique measurement units
+    units_map = {'cup': 'cup', 'cups': 'cup', 'teaspoon': 'tsp', 'teaspoons': 'tsp', 'tablespoon': 'tbsp',
+                 'tablespoons': 'tbsp', 'ounces': 'oz', 'tsp.': 'tsp', 'pound': 'lb', 'tbsp': 'tbsp', 'Tbs.': 'tbsp',
+                 'lb': 'lb', 'tbsp.': 'tbsp', 'pounds': 'lb', 'Tbsp': 'tbsp', 'lb.': 'lb', 'Tbsp.': 'tbsp',
+                 'cup(s)': 'cup', 'Tablespoons': 'tbsp', 'pinch': 'pinch', 'oz': 'oz', 'Tablespoon': 'tbsp',
+                 'tablespoon(s)': 'tbsp', 'T': 'tbsp', 'bunch': 'bunch', 'g': 'g', 'lbs': 'lb',
+                 'dash': 'dash', 'oz.': 'oz', 'ounce': 'oz', 'ml': 'ml', 'gr.': 'g', 'sprigs': 'sprig', 'Cup': 'cup',
+                 'pint': 'pint', 'Tbs': 'tbsp', 'TBS': 'tbsp', 'dashes': 'dashes', 'grams': 'g', 'quarts': 'quart',
+                 'lbs.': 'lbs', 'drops': 'drops', 'wedges': 'wedges', 'C': 'cup', 'c': 'cup',
+                 'pound(s)': 'lb', 'Tb.': 'tbsp', 'c.': 'cup', 'ounce(s)': 'oz', 't': 'tsp', 'tbs': 'tbsp',
+                 'Teaspoon': 'tsp'}
+
+    # convert measurement units to standard volume units
+    unit_conversion = {}
 
     def __init__(self):
+        # initialize with MySQL query.
+        self.ids = []
+        self.lines = []
         self.query_database()
 
     def query_database(self):
-        # initialize with MySQL query.
         conn = pymysql.connect('localhost', 'root', '', 'recipes')
         cur = conn.cursor()
         cur.execute("SELECT * FROM Recipe_Lines")
@@ -49,3 +72,5 @@ class MeasurementParser(object):
 
         return ids
 
+    def get_volumes(self):
+        pass
