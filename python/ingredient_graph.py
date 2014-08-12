@@ -5,7 +5,7 @@ from pmi_graph import PMIGraph
 from sklearn.grid_search import GridSearchCV
 from ingredient_mapping import IngredientMapping
 import pymysql
-from
+from pymysql.err import MySQLError
 import os
 
 
@@ -18,6 +18,7 @@ class IngredientGraph(PMIGraph):
         self.user = user
         self.passwd = passwd
         self.imap = None
+        self.ingredient_names = None
 
     def load_ingredient_map(self, table="Ingredient_Map"):
         self.imap = IngredientMapping().from_mysql(table, host=self.host, user=self.user, passwd=self.passwd,
@@ -35,19 +36,34 @@ class IngredientGraph(PMIGraph):
             try:
                 ingredients.append(self.imap[yummly_ingredient])
             except KeyError:
-                
+                ingredients.append(yummly_ingredient)
 
-    def map_ingredients(self):
-        pass
+        return recipe_ids, ingredients
 
-    def build_design_matrix(self, recipes):
-        pass
+    def build_design_matrix(self, recipe_ids, ingredients):
+        unique_ingredients = np.unique(ingredients)
+        self.ingredient_names = unique_ingredients
+        nsamples = len(np.unique(recipe_ids))
+        ningredients = len(unique_ingredients)
+        X = np.zeros((nsamples, ningredients), dtype=np.int)
 
-    def learn_graph(self, X):
-        pass
+        ingredient_idx = dict()
+        for j, ingredient in enumerate(unique_ingredients):
+            ingredient_idx[ingredient] = j
+
+        current_id = recipe_ids[0]
+        r_idx = 0
+        for id, ingredient in zip(recipe_ids, unique_ingredients):
+            if id != current_id:
+                current_id = id
+                r_idx += 1
+            col_idx = ingredient_idx[ingredient]
+            X[r_idx, col_idx] = 1
+
+        return X
 
     def graph_to_mysql(self, graph):
-        pass
+        conn = pymysql.connect(self.host, self.user, self.passwd, self.database)
 
 
 if __name__ == "__main__":

@@ -1,10 +1,26 @@
 __author__ = 'brandonkelly'
 
 import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.base import BaseEstimator
+from sklearn.grid_search import GridSearchCV
+from scipy.special import gammaln
 
 
-class PMIGraph(object):
+def binomial_loglik(graph, X):
+    nsamples, nfeatures = X.shape
+    npairs = graph.predict(X)
+    loglik = 0.0
+    for j in xrange(nfeatures):
+        this_loglik = gammaln(nsamples + 1) - gammaln(npairs[j, j + 1:] + 1) - gammaln(nsamples - npairs[j, j + 1:] + 1)
+        this_loglik += npairs[j, j + 1:] * np.log(graph.joint_probs[j, j + 1:]) + \
+            (nsamples - npairs[j, j + 1:]) * np.log(1.0 - graph.joint_probs[j, j + 1:])
+        loglik += np.sum(this_loglik)
 
+    return loglik
+
+
+class PMIGraph(BaseEstimator):
     def __init__(self, nprior=1.0, verbose=False):
         self.nprior = nprior
         self.verbose = verbose
@@ -35,7 +51,7 @@ class PMIGraph(object):
         self.pmi = np.zeros((nfeatures, nfeatures))
         if self.verbose:
             print 'Finding pairs involving column:'
-        for j in xrange(nfeatures-1):
+        for j in xrange(nfeatures - 1):
             print '  ', j + 1, '...'
             active_set1 = X[:, j] == 1
             for k in xrange(j + 1, nfeatures):
@@ -76,7 +92,7 @@ class PMIGraph(object):
         if self.verbose:
             print 'Counting pairs for column:'
         # find number of times a pair of features appeared in a sample
-        for j in xrange(nfeatures-1):
+        for j in xrange(nfeatures - 1):
             print '  ', j + 1, '...'
             active_set1 = X[:, j] == 1
             for k in xrange(j + 1, nfeatures):
@@ -93,14 +109,39 @@ class PMIGraph(object):
         pass
 
 
+def fit_pmi_graph_cv(X, verbose=False, n_jobs=1, cv=7, doplot=False, graph=None):
+    if graph is None:
+        graph = PMIGraph()
+    param_grid = {'nprior': np.logspace(0.0, np.log10(100 * nsamples), 20)}  # the prior sample sizes
+    grid_search = GridSearchCV(graph, param_grid, scoring=binomial_loglik, n_jobs=n_jobs, cv=cv, verbose=verbose).fit(X)
+
+    if verbose:
+        print 'Used cross-validation to choose a prior sample size of', grid_search.best_params_['nprior']
+
+    if doplot:
+        pgrid = []
+        mean_score = []
+        for grid_score in grid_search.grid_scores_:
+            pgrid.append(grid_score[0]['nprior'])
+            mean_score.append(grid_score[1])
+        plt.plot(pgrid, mean_score, '-')
+        plt.semilogx(pgrid, mean_score, 'o')
+        plt.xlabel('nprior')
+        plt.ylabel('Binomial loglik')
+        plt.semilogx(2 * [grid_search.best_params_['nprior']], plt.ylim(), 'k-')
+        plt.show()
+
+    return grid_search.best_estimator_
+
+
 if __name__ == "__main__":
     # do quick test on the class assuming the feature events are independent
-    nsamples = 100000
-    nfeatures = 5
+    nsamples = 1000
+    nfeatures = 100
     mprob = np.random.uniform(0.0, 1.0, nfeatures)
     jprob = np.zeros((nfeatures, nfeatures))
     pmi = np.zeros((nfeatures, nfeatures))
-    for j in range(nfeatures-1):
+    for j in range(nfeatures - 1):
         for k in range(j + 1, nfeatures):
             jprob[j, k] = mprob[j] * mprob[k]
             pmi[j, k] = np.log(jprob[j, k]) - np.log(mprob[j]) - np.log(mprob[k])
@@ -112,9 +153,9 @@ if __name__ == "__main__":
 
     npairs_true = np.zeros((nfeatures, nfeatures), dtype=int)
     for i in xrange(nsamples):
-        for j in xrange(nfeatures-1):
+        for j in xrange(nfeatures - 1):
             if X[i, j] == 1:
-                for k in xrange(j+1, nfeatures):
+                for k in xrange(j + 1, nfeatures):
                     if X[i, k] == 1:
                         npairs_true[j, k] += 1
 
@@ -143,3 +184,8 @@ if __name__ == "__main__":
 
     npairs = graph.predict(X)
     assert np.all(npairs_true == npairs)
+
+    # finally, do cross-validation
+    graph = fit_pmi_graph_cv(X, verbose=True, n_jobs=7, cv=7, doplot=True)
+    print 'CV PMI:'
+    print graph.pmi
