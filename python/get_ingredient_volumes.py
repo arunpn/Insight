@@ -19,13 +19,17 @@ class MeasurementParser(object):
                  'cup(s)': 'cup', 'Tablespoons': 'tbsp', 'pinch': 'pinch', 'oz': 'oz', 'Tablespoon': 'tbsp',
                  'tablespoon(s)': 'tbsp', 'T': 'tbsp', 'bunch': 'bunch', 'g': 'g', 'lbs': 'lb',
                  'dash': 'dash', 'oz.': 'oz', 'ounce': 'oz', 'ml': 'ml', 'gr.': 'g', 'sprigs': 'sprig', 'Cup': 'cup',
-                 'pint': 'pint', 'Tbs': 'tbsp', 'TBS': 'tbsp', 'dashes': 'dashes', 'grams': 'g', 'quarts': 'quart',
-                 'lbs.': 'lbs', 'drops': 'drops', 'wedges': 'wedges', 'C': 'cup', 'c': 'cup',
+                 'pint': 'pint', 'Tbs': 'tbsp', 'TBS': 'tbsp', 'dashes': 'dash', 'grams': 'g', 'quarts': 'quart',
+                 'lbs.': 'lb', 'drops': 'drops', 'wedges': 'wedges', 'C': 'cup', 'c': 'cup',
                  'pound(s)': 'lb', 'Tb.': 'tbsp', 'c.': 'cup', 'ounce(s)': 'oz', 't': 'tsp', 'tbs': 'tbsp',
                  'Teaspoon': 'tsp'}
 
-    # convert measurement units to standard volume units
-    unit_conversion = {}
+    # convert measurement units to cups units
+    unit_conversion = {'cup': 1.0, 'tsp': 0.021, 'tbsp': 0.063, 'oz': 0.125, 'lb': 2.0, 'bunch': 1.0, 'dash': 0.005,
+                       'dashes': 0.005, 'drops': 0.005, 'g': 0.004, 'pinch': 0.005, 'pint': 0.5, 'quart': 0.25,
+                       'sprig': 0.021, 'wedges': 4}
+
+    fuits_to_juice = {'lime': 0.13, 'lemon': 0.19, 'orange': 0.33}
 
     def __init__(self):
         # initialize with MySQL query.

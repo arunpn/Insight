@@ -110,7 +110,7 @@ if __name__ == "__main__":
     sugar_columns = []
     nuetral_columns = []
     nuetral_ingredients = ['oil', 'water', 'noodles', 'pasta', 'olive oil', 'butter', 'rice', 'rolls', 'white rice',
-                           'brown rice', 'coconut oil', 'bread', 'buns', 'pasta']
+                           'brown rice', 'coconut oil', 'bread', 'buns', 'pasta', 'flour']
     fit_columns = []
     for j, ingredient in enumerate(uingredients):
         if ' salt' in ingredient or 'salt ' in ingredient or ' salt ' in ingredient or ingredient == 'salt':

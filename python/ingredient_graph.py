@@ -43,15 +43,21 @@ class IngredientGraph(PMIGraph):
 
         return recipe_ids, ingredients
 
-    def build_design_matrix(self, recipe_ids, ingredients):
+    def build_design_matrix(self, recipe_ids, ingredients, min_counts=2):
         unique_ingredients = np.unique(ingredients)
-        self.ingredient_names = unique_ingredients
+        frequent_ingredients = []
+        for j, ingredient in enumerate(unique_ingredients):
+            if ingredients.count(ingredient) > min_counts:
+                # only consider ingredient that have appeared in some minimum number of recipes
+                frequent_ingredients.append(ingredient)
+
+        self.ingredient_names = frequent_ingredients
         nsamples = len(np.unique(recipe_ids))
-        ningredients = len(unique_ingredients)
-        X = np.zeros((nsamples, ningredients), dtype=np.int)
+        ningredients = len(frequent_ingredients)
+        X = np.zeros((nsamples, ningredients), dtype=bool)
 
         ingredient_idx = dict()
-        for j, ingredient in enumerate(unique_ingredients):
+        for j, ingredient in enumerate(frequent_ingredients):
             ingredient_idx[ingredient] = j
 
         current_id = recipe_ids[0]
@@ -60,8 +66,9 @@ class IngredientGraph(PMIGraph):
             if id != current_id:
                 current_id = id
                 r_idx += 1
-            col_idx = ingredient_idx[ingredient]
-            X[r_idx, col_idx] = 1
+            if ingredient in frequent_ingredients:
+                col_idx = ingredient_idx[ingredient]
+                X[r_idx, col_idx] = True
 
         return X
 
@@ -92,14 +99,31 @@ if __name__ == "__main__":
     data_dir = base_dir + 'data/yummly/'
     plot_dir = base_dir + 'plots/'
 
-    graph = IngredientGraph()
-    graph.load_ingredient_map()
-    ids, ingredients = graph.load_ingredients()
-    X = graph.build_design_matrix(ids, ingredients)
-    graph = fit_pmi_graph_cv(X, verbose=True, n_jobs=7, cv=7, doplot=True, graph=graph)
-
-    X = graph.build_design_matrix(ids, ingredients)  # need to do this here since graph returned above is not the same
-
+    doCV = False
+    if doCV:
+        graph = IngredientGraph()
+        graph.load_ingredient_map()
+        ids1, ingredients1 = graph.load_ingredients(table='Ingredient_List_Graph')
+        ids2, ingredients2 = graph.load_ingredients()  # ingredient labels as sauces or condiments
+        ids2 = list(np.array(ids2) + np.max(ids1) + 1)
+        ids1.extend(ids2)
+        ingredients1.extend(ingredients2)
+        X = graph.build_design_matrix(ids1, ingredients1, min_counts=50)
+        print 'Found', X.shape[1], 'ingredients and', X.shape[0], 'recipes.'
+        graph = fit_pmi_graph_cv(X, verbose=True, n_jobs=7, cv=7, doplot=True, graph=graph)
+        # need to do this here since graph returned above is not the same
+        X = graph.build_design_matrix(ids1, ingredients1, min_counts=50)
+    else:
+        graph = IngredientGraph(verbose=True, nprior=1e4)
+        graph.load_ingredient_map()
+        ids1, ingredients1 = graph.load_ingredients(table='Ingredient_List_Graph')
+        ids2, ingredients2 = graph.load_ingredients()  # ingredient labels as sauces or condiments
+        ids2 = list(np.array(ids2) + np.max(ids1) + 1)
+        ids1.extend(ids2)
+        ingredients1.extend(ingredients2)
+        X = graph.build_design_matrix(ids1, ingredients1, min_counts=50)
+        print 'Found', X.shape[1], 'ingredients and', X.shape[0], 'recipes.'
+        graph.fit(X)
     cPickle.dump(graph, open(data_dir + 'ingredient_graph.pickle', 'wb'))
-
+    print 'Saving Graph to MySQL...'
     graph.graph_to_mysql()
