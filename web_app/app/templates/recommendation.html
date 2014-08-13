@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Starter Template for Bootstrap</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="static/css/bootstrap.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="static/starter-template.css" rel="stylesheet">
+
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="container">
+
+      <div class="starter-template">
+        <h1>Ingredient Recommendation Engine</h1>
+        <form class="form-horizontal" method="GET" action="/recommendation" role="form">
+          <div class="form-group">
+            <label class="col-sm-2 control-label">Yummly Recipe URL</label>
+            <div class="col-sm-10">
+              <input type="text" class="form-control" name="yummly_url"
+                     placeholder="e.g., http://www.yummly.com/recipe/A-Very-Popular-Bbq-Sauce-Allrecipes?columns=6&position=14%2F60">
+            </div>
+          </div>
+          <div>
+            <h3>
+                Recommend ingredients that will make this recipe more
+            </h3>
+            <label class="radio-inline">
+              <input type="radio" name="inlineRadioOptions" id="rsweet" value="sweet"> Sweet
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="inlineRadioOptions" id="rsalty" value="salty"> Salty
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="inlineRadioOptions" id="rsour" value="sour"> Sour
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="inlineRadioOptions" id="rsavory" value="savory"> Savory
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="inlineRadioOptions" id="rbitter" value="bitter"> Bitter
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="inlineRadioOptions" id="rpiquant" value="piquant"> Piquant
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="inlineRadioOptions" id="rany" value="any"> No Preference
+            </label>
+          </div>
+          <div>
+            <p>
+                Number of ingredients to recommend
+                <select class="form-control-inline" name="ingredient_number">
+                  <option>5</option>
+                  <option>10</option>
+                  <option>25</option>
+                  <option>50</option>
+                </select>
+            </p>
+          </div>
+          <div>
+              <button type="submit" class="btn btn-primary btn-small">Recommend Ingredients</button>
+          </div>
+        </form>
+
+        <table id = "ranklist" class="table table-hover">
+            <tr><th>Recommended Ingredient</th></tr>
+            {% for ingredient in ingredients %}
+            <tr><td>{{ ingredient }}</td></tr>
+            {% endfor %}
+    	</table>
+
+    </div><!-- /.container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="static/js/jquery.js"></script>
+    <script src="static/js/bootstrap.js"></script>
+    <script src="static/js/bootstrap.min.js"></script>
+    <script>
+        var add_ingredients = function() {
+            $('#ingredient_box').append('<p> center cut pork chops, brown mustard seeds, habanero chile, English mustard, chicken meat </p>');
+        }
+        $(document).ready(function() {
+            $('#ingredientmaker').click(add_ingredients);
+            }
+        )
+    </script>
+  </body>
+</html>

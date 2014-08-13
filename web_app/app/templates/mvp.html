@@ -48,9 +48,26 @@
     <div class="container">
 
       <div class="starter-template">
-        <h1>Bootstrap starter template</h1>
-        <p class="lead">Seed recipe: Martha Stewart's quick BBQ sauce..<br>
-            Ingredients: ketchup, light brown sugar, white wine vinegar, worcestershire sauce, paprika, cayenne pepper.</p>
+        <h1>Ingredient Recommendation Engine</h1>
+         <div class="input-group">
+            <span class="input-group-addon">Input Yummly URL</span>
+            <input type="text" class="form-control"
+                   placeholder="http://www.yummly.com/recipe/Absolutely-Awesome-Bbq-Sauce-Allrecipes?columns=6&position=5%2F60">
+         </div>
+         <div>
+             <h1>
+                 Make this recipe more
+             </h1>
+         </div>
+         <div class="btn-group">
+            <button type="button" class="btn btn-default">Sweet</button>
+            <button type="button" class="btn btn-default">Salty</button>
+            <button type="button" class="btn btn-default">Sour</button>
+            <button type="button" class="btn btn-default">Savory</button>
+            <button type="button" class="btn btn-default">Bitter</button>
+            <button type="button" class="btn btn-default">Piquant</button>
+            <button type="button" class="btn btn-default">Surprise Me!</button>
+          </div>
       </div>
       <div class="buttonbox">
           <button id="ingredientmaker">Recommend a new piquant ingredient.</button>

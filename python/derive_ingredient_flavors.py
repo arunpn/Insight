@@ -82,7 +82,7 @@ if __name__ == "__main__":
     plot_dir = base_dir + 'plots/'
 
     # grab the ingredients for each recipe
-    conn = pymysql.connect('localhost', 'root', '', 'recipes')
+    conn = pymysql.connect('localhost', 'root', '', 'recipes', autocommit=True, charset='utf8')
     cur = conn.cursor()
     cur.execute("SELECT * FROM Ingredient_List")
     rows = cur.fetchall()
@@ -220,3 +220,20 @@ if __name__ == "__main__":
             df.set_value(df.index[i], 'type', 'none')
 
     df.to_hdf(data_dir + 'flavor_profiles_' + model + '.h5', 'df')
+
+    cur.execute("DROP TABLE IF EXISTS Ingredient_Flavors")
+    sql_command = "CREATE TABLE Ingredient_Flavors (Ingredient VARCHAR(100) PRIMARY KEY, Counts INT, "
+    for fname in flav_names:
+        sql_command += fname + " FLOAT, "
+    sql_command += "Type VARCHAR(20))"
+    cur.execute(sql_command)
+    for idx in df.index:
+        this_df = df.ix[idx]
+        sql_command = "INSERT INTO Ingredient_Flavors VALUES(" + idx + ", " + this_df['counts'] + ", "
+        for fname in flav_names:
+            sql_command += str(this_df[fname]) + ", "
+        sql_command += this_df['type'] + ")"
+    cur.execute(sql_command)
+
+    cur.close()
+    conn.close()

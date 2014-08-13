@@ -1,6 +1,6 @@
 __author__ = 'brandonkelly'
 
-from flask import render_template, jsonify
+from flask import render_template, jsonify, request
 from app import app
 import pymysql as mdb
 import pandas as pd
@@ -61,3 +61,25 @@ def cities_json():
 @app.route("/mvp")
 def index_mvp():
     return render_template('mvp.html')
+
+@app.route("/product", methods=['POST', 'GET'])
+def index_product():
+    return render_template('product.html')
+
+
+def get_ingredients(yummly_url):
+    pass
+
+
+def get_recommendations(input_ingredients, flavor, nrecommendations):
+    pass
+
+
+@app.route("/recommendation", methods=['GET'])
+def index_recommendation():
+    yummly_url = request.args.get('yummly_url')
+    input_ingredients = get_ingredients(yummly_url)
+    flavor_type = request.args.get('inlineRadioOptions')
+    ningredients = request.args.get('ingredient_number')
+    ingredients = get_recommendations(input_ingredients, flavor_type, ningredients)
+    return render_template('recommendation.html', ingredients=ingredients)
