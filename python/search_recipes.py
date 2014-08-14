@@ -36,7 +36,6 @@ cur.execute("DROP TABLE IF EXISTS Recipe_IDs_Graph")
 cur.execute("CREATE TABLE Recipe_IDs_Graph(Id INT NOT NULL, YummlyID VARCHAR(1000), PRIMARY KEY(Id))")
 cur.execute("DROP TABLE IF EXISTS Ingredient_List_Graph")
 cur.execute("CREATE TABLE Ingredient_List_Graph(Id INT, Ingredient VARCHAR(200))")
-cur.execute("DROP TABLE IF EXISTS Recipe_Attributes")
 
 print 'Getting search results...'
 matches = []

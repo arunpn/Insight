@@ -9,7 +9,9 @@ from ingredient_mapping import IngredientMapping
 from scipy.optimize import nnls
 from sklearn.linear_model import MultiTaskElasticNetCV, MultiTaskLassoCV
 import pymysql
+from pymysql.err import MySQLError
 import argparse
+from ingredient_mapping import IngredientMapping
 
 
 def fit_nnls(X, flavors):
@@ -44,7 +46,7 @@ def fit_enet(X, flavors):
     idx = np.all(np.isfinite(y), axis=1)
 
     print 'Performing multi-task elastic net...'
-    enet = MultiTaskElasticNetCV(cv=7, n_jobs=7, fit_intercept=False, verbose=1).fit(X, y)
+    enet = MultiTaskElasticNetCV(cv=7, n_jobs=7, fit_intercept=False, verbose=1).fit(X[idx], y[idx])
     weights = inv_logit(enet.coef_.T)  # transform to 0 to 1 scale
 
     return weights
@@ -57,7 +59,7 @@ def fit_lasso(X, flavors):
     idx = np.all(np.isfinite(y), axis=1)
 
     print 'Performing multi-task elastic net...'
-    lasso = MultiTaskLassoCV(cv=7, n_jobs=7, fit_intercept=False, verbose=1).fit(X, y)
+    lasso = MultiTaskLassoCV(cv=7, n_jobs=7, fit_intercept=False, verbose=1).fit(X[idx], y[idx])
     weights = inv_logit(lasso.coef_.T)  # transform to 0 to 1 scale
 
     return weights
@@ -84,13 +86,20 @@ if __name__ == "__main__":
     # grab the ingredients for each recipe
     conn = pymysql.connect('localhost', 'root', '', 'recipes', autocommit=True, charset='utf8')
     cur = conn.cursor()
+    print 'Loading the ingredient map...'
+    imap = IngredientMapping().from_mysql("Ingredient_Map")
+
     cur.execute("SELECT * FROM Ingredient_List")
     rows = cur.fetchall()
     recipe_ids = []
     ingredients = []
     for row in rows:
         recipe_ids.append(row[0])
-        ingredients.append(row[1])
+        try:
+            this_ingredient = imap[row[1].lower()]
+        except KeyError:
+            this_ingredient = row[1]
+        ingredients.append(this_ingredient)
 
     recipe_ids = np.array(recipe_ids)
     ingredients = np.array(ingredients)
@@ -131,7 +140,7 @@ if __name__ == "__main__":
         elif ingredient in nuetral_ingredients or 'olive oil' in ingredient:
             nuetral_columns.append(j)
         else:
-            fit_columns.append()
+            fit_columns.append(j)
 
     print 'Found the following salty ingredients:'
     print uingredients[salt_columns]
@@ -147,7 +156,7 @@ if __name__ == "__main__":
     cur.execute("SELECT Id, Salty, Sweet, Sour, Bitter, Piquant, Meaty FROM Recipe_Attributes")
     rows = cur.fetchall()
     flavors = np.array(rows)
-    flavors = flavors[urecipe_ids][:, 1:]  # first column is the recipe ID
+    flavors = flavors[urecipe_ids][:, 1:].astype(np.float)  # first column is the recipe ID
 
     for salt in salt_columns:
         flavors[:, 0] -= X[:, salt]
@@ -157,25 +166,27 @@ if __name__ == "__main__":
     remove_columns = list(salt_columns)
     remove_columns.extend(sugar_columns)
     remove_columns.extend(nuetral_columns)
-    X = np.delete(X, remove_columns, axis=1)  # remove columns where we forced the salty and sweet values
+    X_fit = np.delete(X, remove_columns, axis=1)  # remove columns where we forced the salty and sweet values
 
     if model == 'nnls':
-        weights = fit_nnls(X, flavors)
+        weights = fit_nnls(X_fit, flavors)
     elif model == 'enet':
-        weights = fit_enet(X, flavors)
+        weights = fit_enet(X_fit, flavors)
     elif model == 'lasso':
-        weights = fit_lasso(X, flavors)
+        weights = fit_lasso(X_fit, flavors)
     weights_salt = np.zeros((len(salt_columns), flavors.shape[1]))
     weights_salt[:, 0] = 1.0
-    weights_sugar = np.zeros_like(weights_salt)
+    weights_sugar = np.zeros((len(sugar_columns), flavors.shape[1]))
     weights_sugar[:, 1] = 1.0
-    weights_nuetral = np.zeros_like(weights_salt)
+    weights_nuetral = np.zeros((len(nuetral_columns), flavors.shape[1]))
     weights = np.vstack((weights, weights_salt, weights_sugar, weights_nuetral))
 
     ingredient_names = fit_columns
     ingredient_names.extend(salt_columns)
     ingredient_names.extend(sugar_columns)
     ingredient_names.extend(nuetral_columns)
+    X = X[:, ingredient_names]
+    ingredient_names = uingredients[ingredient_names]
 
     fit, axs = plt.subplots(2, 3)
     f_idx = 0
@@ -229,11 +240,14 @@ if __name__ == "__main__":
     cur.execute(sql_command)
     for idx in df.index:
         this_df = df.ix[idx]
-        sql_command = "INSERT INTO Ingredient_Flavors VALUES(" + idx + ", " + this_df['counts'] + ", "
+        sql_command = "INSERT INTO Ingredient_Flavors VALUES('" + idx + "', " + str(this_df['counts']) + ", "
         for fname in flav_names:
             sql_command += str(this_df[fname]) + ", "
-        sql_command += this_df['type'] + ")"
-    cur.execute(sql_command)
+        sql_command += "'" + this_df['type'] + "')"
+        try:
+            cur.execute(sql_command)
+        except MySQLError:
+            print "Could not enter", idx, "into the database, skipping."
 
     cur.close()
     conn.close()

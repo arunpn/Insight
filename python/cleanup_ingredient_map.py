@@ -54,7 +54,7 @@ for ingredient in IngMap.keys():
 pastas = ['spaghetti', 'penne', 'bucatini', 'ravioli', 'rigatoni', 'ziti', 'rotelle', 'vermicelli', 'fusilli',
           'conchiglie', 'rotini', 'cannelloni', 'capellini', 'cavatappi', 'cavatelli', 'conchiglie', 'conchiglioni',
           'ditalini', 'fedelini', 'fettucine', 'lasagne', 'linguini', 'linguine', 'mostaccioli', 'orecchiette',
-          'paccheri', 'pappardelle', 'perciatelli', 'tagliatelle', 'tortellini', 'tortiglioni']
+          'paccheri', 'pappardelle', 'perciatelli', 'tagliatelle', 'tortellini', 'tortiglioni', 'orzo']
 for ingredient in IngMap:
     if IngMap[ingredient] in pastas:
         IngMap[ingredient] = 'pasta'
