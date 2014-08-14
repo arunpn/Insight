@@ -37,6 +37,7 @@
                      placeholder="e.g., http://www.yummly.com/recipe/A-Very-Popular-Bbq-Sauce-Allrecipes?columns=6&position=14%2F60">
             </div>
           </div>
+          <!--
           <div>
             <h3>
                 Recommend ingredients that will make this recipe more
@@ -63,6 +64,7 @@
               <input type="radio" name="inlineRadioOptions" id="rany" value="any"> No Preference
             </label>
           </div>
+          --->
           <div>
             <p>
                 Number of ingredients to recommend
@@ -80,7 +82,7 @@
         </form>
 
         <table id = "ranklist" class="table table-hover">
-            <tr><th>Recommended Ingredient</th></tr>
+            <tr><th>Recommended Ingredients</th></tr>
             {% for ingredient in ingredients %}
             <tr><td>{{ ingredient }}</td></tr>
             {% endfor %}
@@ -95,14 +97,5 @@
     <script src="static/js/jquery.js"></script>
     <script src="static/js/bootstrap.js"></script>
     <script src="static/js/bootstrap.min.js"></script>
-    <script>
-        var add_ingredients = function() {
-            $('#ingredient_box').append('<p> center cut pork chops, brown mustard seeds, habanero chile, English mustard, chicken meat </p>');
-        }
-        $(document).ready(function() {
-            $('#ingredientmaker').click(add_ingredients);
-            }
-        )
-    </script>
   </body>
 </html>

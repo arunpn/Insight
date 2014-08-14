@@ -3,12 +3,7 @@ __author__ = 'brandonkelly'
 from flask import render_template, jsonify, request
 from app import app
 import pymysql as mdb
-import pandas as pd
-import os
-import numpy as np
-
-base_dir = os.environ['HOME'] + '/Projects/Insight/'
-data_dir = base_dir + 'data/yummly/'
+from recommendations import get_ingredients, get_recommendations
 
 db = mdb.connect(user="root", host="localhost", db="world_innodb", charset='utf8')
 recipes_db = mdb.connect(user="root", host="localhost", db="recipes", charset="utf8")
@@ -66,58 +61,11 @@ def index_mvp():
 def index_product():
     return render_template('product.html')
 
-
-def get_ingredients(yummly_url):
-    pass
-
-
-def get_recommendations(input_ingredients, flavor, nrecommendations):
-    conn = mdb.connect('localhost', 'root', '', 'recipes', charset='utf8')
-    cur = conn.cursor()
-    potential_ingredients = []
-    # get the list of potential ingredients to recommend
-    cur.execute("SELECT DISTINCT Ingredient2 FROM Ingredient_Graph")
-    rows = cur.fetchall()
-    for row in rows:
-        potential_ingredients.append(row[0].lower())
-    ingredient_pmi = pd.Series(np.zeros(len(rows)), index=potential_ingredients)
-
-    # find the ingredients to recommend
-    if flavor != "any":
-        # find subset of ingredients with this flavor profile
-        sql_command = """ SELECT * FROM
-                          Ingredient_Graph JOIN Ingredient_Flavors
-                          WHERE Ingredient_Flavors.Type =
-                          """ + flavor
-        print sql_command
-        cur.execute("SELECT Ingredient FROM Ingredient_Flavors WHERE Type = " + flavor)
-
-    # compute total pairwise mutual information for the set of ingredients
-    for ingredient in input_ingredients:
-        sql_command = "SELECT * FROM Ingredient_Graph WHERE Ingredient1 = " + \
-                      ingredient + " or Ingredient2 = " + ingredient
-        cur.execute(sql_command)
-        rows = cur.fetchall()
-        for row in rows:
-            ingredient1 = row[0].lower()
-            ingredient2 = row[1].lower()
-            pmi = row[3]
-            if ingredient1 != ingredient:
-                ingredient_pmi[ingredient1] += pmi
-            else:
-                ingredient_pmi[ingredient2] += pmi
-
-    ingredient_pmi.sort(ascending=False)
-    recommended_ingredients = ingredient_pmi.index[:nrecommendations]
-
-    return recommended_ingredients
-
-
 @app.route("/recommendation", methods=['GET'])
 def index_recommendation():
     yummly_url = request.args.get('yummly_url')
     input_ingredients = get_ingredients(yummly_url)
-    flavor_type = request.args.get('inlineRadioOptions')
-    ningredients = request.args.get('ingredient_number')
-    ingredients = get_recommendations(input_ingredients, flavor_type, ningredients)
+    # flavor_type = request.args.get('inlineRadioOptions')
+    ningredients = int(request.args.get('ingredient_number'))
+    ingredients = get_recommendations(input_ingredients, 'any', ningredients)
     return render_template('recommendation.html', ingredients=ingredients)

@@ -58,7 +58,7 @@ def fit_lasso(X, flavors):
     y = logit(flavors)
     idx = np.all(np.isfinite(y), axis=1)
 
-    print 'Performing multi-task elastic net...'
+    print 'Performing multi-task LASSO...'
     lasso = MultiTaskLassoCV(cv=7, n_jobs=7, fit_intercept=False, verbose=1).fit(X[idx], y[idx])
     weights = inv_logit(lasso.coef_.T)  # transform to 0 to 1 scale
 
@@ -152,7 +152,7 @@ if __name__ == "__main__":
     X /= X.sum(axis=1)[:, np.newaxis]
 
     # grab the flavor profiles for each recipe
-    flav_names = ['salty', 'sour', 'sweet', 'bitter', 'piquant', 'meaty']
+    flav_names = ['salty', 'sweet', 'sour', 'bitter', 'piquant', 'meaty']
     cur.execute("SELECT Id, Salty, Sweet, Sour, Bitter, Piquant, Meaty FROM Recipe_Attributes")
     rows = cur.fetchall()
     flavors = np.array(rows)
