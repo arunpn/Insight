@@ -4,6 +4,7 @@ import numpy as np
 from bs4 import BeautifulSoup
 from urllib import urlopen
 import pymysql as mdb
+from pymysql.err import MySQLError
 import pandas as pd
 
 
@@ -46,7 +47,10 @@ def get_recommendations(input_ingredients, flavor, nrecommendations):
     for ingredient in input_ingredients:
         sql_command = "SELECT * FROM Ingredient_Graph WHERE Ingredient1 = '" + \
                       ingredient + "' or Ingredient2 = '" + ingredient + "'"
-        cur.execute(sql_command)
+        try:
+            cur.execute(sql_command)
+        except MySQLError:
+            continue
         rows = cur.fetchall()
         if len(rows) > 0:
             # only use similarity info for ingredients used to train the ingredient graph
