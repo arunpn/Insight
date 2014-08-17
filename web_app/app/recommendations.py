@@ -196,20 +196,29 @@ do_not_recommend = \
     ]
 
 
-def get_ingredients(yummly_url):
-    text_soup = BeautifulSoup(urlopen(yummly_url).read())
-    tags = text_soup.findAll('meta', attrs={'property': 'yummlyfood:ingredients'})
+def get_ingredients(ingredient_input):
+    # check if user gave a link to a yummly recipe
+    input_ingredients = []
+    if ingredient_input.startswith('http') or ingredient_input.startswith('www'):
+        text_soup = BeautifulSoup(urlopen(ingredient_input).read())
+        tags = text_soup.findAll('meta', attrs={'property': 'yummlyfood:ingredients'})
+        for tag in tags:
+            input_ingredients.append(tag['content'])
+    else:
+        # user supplied a list of ingredients
+        for ingredient in ingredient_input.split(','):
+            input_ingredients.append(ingredient.strip().lower())
+
     ingredients = []
     conn = mdb.connect('localhost', 'root', '', 'recipes')
     cur = conn.cursor()
-    for tag in tags:
-        yummly_ingredient = tag['content']
+    for input_ingredient in input_ingredients:
         # test if the ingredient is mapped to a different ingredient
-        cur.execute("SELECT Ingredient FROM Ingredient_Map WHERE Yummly_Ingredient = '" + yummly_ingredient + "'")
+        cur.execute("SELECT Ingredient FROM Ingredient_Map WHERE Yummly_Ingredient = '" + input_ingredient + "'")
         rows = cur.fetchall()
         if len(rows) == 0:
             # ingredient not in ingredient map, just use it's value
-            ingredient = yummly_ingredient
+            ingredient = input_ingredient
         else:
             ingredient = rows[0][0]
         ingredients.append(ingredient)

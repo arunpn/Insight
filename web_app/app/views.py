@@ -63,8 +63,8 @@ def index_product():
 
 @app.route("/recommendation", methods=['GET'])
 def index_recommendation():
-    yummly_url = request.args.get('yummly_url')
-    input_ingredients = get_ingredients(yummly_url)
+    ingredient_input = request.args.get('ingredient_input')
+    input_ingredients = get_ingredients(ingredient_input)
     # flavor_type = request.args.get('inlineRadioOptions')
     ningredients = int(request.args.get('ingredient_number'))
     ingredients = get_recommendations(input_ingredients, 'any', ningredients)

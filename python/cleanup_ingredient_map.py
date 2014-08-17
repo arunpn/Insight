@@ -78,6 +78,7 @@ merge = \
         ('chile pepper', 'chiles'),
         ('chile sauce', 'chili sauce'),
         ('chop fine pecan', 'pecans'),
+        ('catsup', 'ketchup'),
         ('pecan halves', 'pecans'),
         ('chopped bell pepper', 'bell pepper'),
         ('clove garlic, fine chop', 'garlic'),

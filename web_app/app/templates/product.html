@@ -31,10 +31,10 @@
         <h1>Ingredient Recommendation Engine</h1>
         <form class="form-horizontal" method="GET" action="/recommendation" role="form">
           <div class="form-group">
-            <label class="col-sm-2 control-label">Yummly Recipe URL</label>
+            <label class="col-sm-2 control-label">Comma-separated list of ingredients or link to Yummly recipe</label>
             <div class="col-sm-10">
-              <input type="text" class="form-control" name="yummly_url"
-                     placeholder="e.g., http://www.yummly.com/recipe/A-Very-Popular-Bbq-Sauce-Allrecipes?columns=6&position=14%2F60">
+              <input type="text" class="form-control" name="ingredient_input"
+                     placeholder="e.g., chicken, garlic, onions, tomatoes, ancho, salt">
             </div>
           </div>
           <!--

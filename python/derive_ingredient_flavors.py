@@ -14,8 +14,103 @@ import argparse
 from ingredient_mapping import IngredientMapping
 
 
+nuetral_ingredients = \
+    ['oil',
+     'water',
+     'noodles',
+     'pasta',
+     'olive oil',
+     'butter',
+     'rice',
+     'rolls',
+     'white rice',
+     'brown rice',
+     'coconut oil',
+     'bread',
+     'buns',
+     'pasta',
+     'flour',
+     'angel hair',
+     'baguette',
+     'baking mix',
+     'baking powder',
+     'baking soda',
+     'bean threads',
+     'biscuits',
+     'bisquick',
+     'buns',
+     'chips',
+     'cooked rice',
+     'cooking spray',
+     'corn husks',
+     'corn starch',
+     'dough',
+     'dumping wrappers',
+     'egg noodles, cooked and drained',
+     'egg roll wrappers',
+     'egg roll wraps',
+     'english muffins',
+     'fat',
+     'fettuccine pasta',
+     'fettuccini',
+     'flour',
+     'french baguett',
+     'gelatin',
+     'hot dog bun',
+     'ice',
+     'lasagna noodles',
+     'lasagna noodles, cooked and drained',
+     'liquid',
+     'long-grain rice',
+     'macaroni',
+     'manicotti',
+     'margarine',
+     'meat tenderizer',
+     'minute rice',
+     'nonstick spray',
+     'orzo',
+     'pastry',
+     'phyllo',
+     'pie crust',
+     'pie shell',
+     'pitas',
+     'pizza crust',
+     'pizza doughs',
+     'potato chips',
+     'potato starch',
+     'prebaked pizza crusts',
+     'pretzel sticks',
+     'red food coloring',
+     'refrigerated piecrusts',
+     'rice',
+     'rice paper',
+     'rice sticks',
+     'rolls',
+     'shells',
+     'short-grain rice',
+     'shortening',
+     'spaghetti, cook and drain',
+     'spring roll wrappers',
+     'steamed rice',
+     'sushi rice',
+     'taco shells',
+     'textured soy protein',
+     'toast',
+     'tortilla chips',
+     'udon',
+     'water',
+     'wheat',
+     'white rice',
+     'wide egg noodles',
+     'wonton skins',
+     'wonton wrappers',
+     'yeast',
+     'yellow corn meal'
+    ]
+
+
 def fit_nnls(X, flavors):
-    flav_names = ['salty', 'sour', 'sweet', 'bitter', 'piquant', 'meaty']
+    flav_names = ['sweet', 'savory', 'piquant']
     weights_mat = np.zeros((X.shape[1], flavors.shape[1]))
 
     for j in xrange(flavors.shape[1]):
@@ -115,16 +210,11 @@ if __name__ == "__main__":
             X[i, uingredients == ingredient] = 1.0
 
     # hard code common ingredients, necessary to anchor the derived profiles
-    salt_columns = []
     sugar_columns = []
     nuetral_columns = []
-    nuetral_ingredients = ['oil', 'water', 'noodles', 'pasta', 'olive oil', 'butter', 'rice', 'rolls', 'white rice',
-                           'brown rice', 'coconut oil', 'bread', 'buns', 'pasta', 'flour']
     fit_columns = []
     for j, ingredient in enumerate(uingredients):
-        if ' salt' in ingredient or 'salt ' in ingredient or ' salt ' in ingredient or ingredient == 'salt':
-            salt_columns.append(j)
-        elif ' sugar' in ingredient or 'sugar ' in ingredient or ' sugar ' in ingredient or ingredient == 'sugar':
+        if ' sugar' in ingredient or 'sugar ' in ingredient or ' sugar ' in ingredient or ingredient == 'sugar':
             sugar_columns.append(j)
         elif ' stevia' in ingredient or 'stevia ' in ingredient or ' stevia ' in ingredient or ingredient == 'stevia':
             sugar_columns.append(j)
@@ -137,13 +227,11 @@ if __name__ == "__main__":
         elif ' candy' in ingredient or 'candy ' in ingredient or ' candy ' in ingredient or \
                         ingredient == 'candy':
             sugar_columns.append(j)
-        elif ingredient in nuetral_ingredients or 'olive oil' in ingredient:
+        elif ingredient in nuetral_ingredients or 'olive oil' in ingredient or 'salt' in ingredient:
             nuetral_columns.append(j)
         else:
             fit_columns.append(j)
 
-    print 'Found the following salty ingredients:'
-    print uingredients[salt_columns]
     print 'Found the following sugar ingredients:'
     print uingredients[sugar_columns]
 
@@ -152,19 +240,20 @@ if __name__ == "__main__":
     X /= X.sum(axis=1)[:, np.newaxis]
 
     # grab the flavor profiles for each recipe
-    flav_names = ['salty', 'sweet', 'sour', 'bitter', 'piquant', 'meaty']
+    flav_names = ['sweet', 'savory', 'piquant']
     cur.execute("SELECT Id, Salty, Sweet, Sour, Bitter, Piquant, Meaty FROM Recipe_Attributes")
     rows = cur.fetchall()
-    flavors = np.array(rows)
-    flavors = flavors[urecipe_ids][:, 1:].astype(np.float)  # first column is the recipe ID
+    flavors = np.zeros((len(rows), 3))
+    for i, row in enumerate(rows):
+        id, salty, sweet, sour, bitter, piquant, savory = row
+        flavors[i, 0] = sweet
+        flavors[i, 1] = np.max([sour, bitter, savory])  # don't distinguish between sour, bitter, and savory
+        flavors[i, 2] = piquant
 
-    for salt in salt_columns:
-        flavors[:, 0] -= X[:, salt]
     for sugar in sugar_columns:
-        flavors[:, 1] -= X[:, sugar]
+        flavors[:, 0] -= X[:, sugar]
     flavors[flavors < 0] = 0.0  # keep flavor profiles positive
-    remove_columns = list(salt_columns)
-    remove_columns.extend(sugar_columns)
+    remove_columns = list(sugar_columns)
     remove_columns.extend(nuetral_columns)
     X_fit = np.delete(X, remove_columns, axis=1)  # remove columns where we forced the salty and sweet values
 
@@ -172,37 +261,35 @@ if __name__ == "__main__":
         weights = fit_nnls(X_fit, flavors)
     elif model == 'enet':
         weights = fit_enet(X_fit, flavors)
-    elif model == 'lasso':
+    else:
         weights = fit_lasso(X_fit, flavors)
-    weights_salt = np.zeros((len(salt_columns), flavors.shape[1]))
-    weights_salt[:, 0] = 1.0
     weights_sugar = np.zeros((len(sugar_columns), flavors.shape[1]))
-    weights_sugar[:, 1] = 1.0
+    weights_sugar[:, 0] = 1.0
     weights_nuetral = np.zeros((len(nuetral_columns), flavors.shape[1]))
-    weights = np.vstack((weights, weights_salt, weights_sugar, weights_nuetral))
+    weights = np.vstack((weights, weights_sugar, weights_nuetral))
 
     ingredient_names = fit_columns
-    ingredient_names.extend(salt_columns)
     ingredient_names.extend(sugar_columns)
     ingredient_names.extend(nuetral_columns)
     X = X[:, ingredient_names]
     ingredient_names = uingredients[ingredient_names]
 
-    fit, axs = plt.subplots(2, 3)
+    fit, axs = plt.subplots(2, 2)
     f_idx = 0
     for row in range(2):
-        for col in range(3):
-            if model in ['enet', 'lasso']:
-                yfit = X.dot(logit(weights[:, f_idx]))
-                yfit = inv_logit(yfit)
-            else:
-                yfit = X.dot(weights[:, f_idx])
-            axs[row, col].plot(yfit, flavors[:, f_idx], '.')
-            axs[row, col].plot([0.0, 1.0], [0.0, 1.0], 'k-')
-            axs[row, col].set_xlim(0, 1)
-            axs[row, col].set_ylim(0, 1)
-            axs[row, col].set_title(flav_names[f_idx])
-            f_idx += 1
+        for col in range(2):
+            if f_idx < len(flav_names):
+                if model in ['enet', 'lasso']:
+                    yfit = X.dot(logit(weights[:, f_idx]))
+                    yfit = inv_logit(yfit)
+                else:
+                    yfit = X.dot(weights[:, f_idx])
+                axs[row, col].plot(yfit, flavors[:, f_idx], '.')
+                axs[row, col].plot([0.0, 1.0], [0.0, 1.0], 'k-')
+                axs[row, col].set_xlim(0, 1)
+                axs[row, col].set_ylim(0, 1)
+                axs[row, col].set_title(flav_names[f_idx])
+                f_idx += 1
     plt.tight_layout()
     plt.show()
 
