@@ -102,8 +102,11 @@ if __name__ == "__main__":
     doCV = False
     if doCV:
         graph = IngredientGraph()
+        print 'Loading the ingredient map...'
         graph.load_ingredient_map()
+        print 'Loading recipes...'
         ids1, ingredients1 = graph.load_ingredients(table='Ingredient_List_Graph')
+        print 'Loading recipes for sauces and condiments...'
         ids2, ingredients2 = graph.load_ingredients()  # ingredient labels as sauces or condiments
         ids2 = list(np.array(ids2) + np.max(ids1) + 1)
         ids1.extend(ids2)

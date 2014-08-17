@@ -192,8 +192,7 @@ do_not_recommend = \
         'wonton skins',
         'wonton wrappers',
         'yeast',
-        'yellow corn meal',
-
+        'yellow corn meal'
     ]
 
 
