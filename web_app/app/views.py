@@ -65,7 +65,7 @@ def index_product():
 def index_recommendation():
     ingredient_input = request.args.get('ingredient_input')
     input_ingredients = get_ingredients(ingredient_input)
-    # flavor_type = request.args.get('inlineRadioOptions')
+    flavor_type = request.args.get('inlineRadioOptions')
     ningredients = int(request.args.get('ingredient_number'))
-    ingredients = get_recommendations(input_ingredients, 'any', ningredients)
+    ingredients = get_recommendations(input_ingredients, flavor_type, ningredients)
     return render_template('recommendation.html', ingredients=ingredients)

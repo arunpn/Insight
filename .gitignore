@@ -153,3 +153,5 @@ plots/
 *.pickle
 *.p
 *.h5
+
+*.pdf

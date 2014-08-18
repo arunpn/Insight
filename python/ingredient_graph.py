@@ -93,6 +93,17 @@ class IngredientGraph(PMIGraph):
 
         conn.close()
 
+    def cluster(self, normalize=False):
+        clusters = super(IngredientGraph, self).cluster(normalize)
+        if self.verbose:
+            cluster_ids = np.unique(clusters)
+            for c_id in cluster_ids:
+                cluster_info = 'Cluster ' + c_id + ':'
+                this_cluster = self.ingredient_names[clusters == c_id]
+                for ingredient in this_cluster:
+                    cluster_info += ' ' + ingredient + ','
+                print cluster_info
+
 
 if __name__ == "__main__":
     base_dir = os.environ['HOME'] + '/Projects/Insight/'

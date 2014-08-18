@@ -7,6 +7,195 @@ from ingredient_graph import IngredientGraph
 import pymysql
 from pymysql.err import MySQLError
 import pandas as pd
+import multiprocessing
+
+do_not_recommend = \
+    [
+        'angel hair',
+        'arborio rice',
+        'artichoke heart marin',
+        'back ribs',
+        'baguette',
+        'baking mix',
+        'baking powder',
+        'baking soda',
+        'basmati rice',
+        'bass',
+        'bean threads',
+        'beef',
+        'bertolli alfredo sauc',
+        'bertolli tomato & basil sauc',
+        'biscuits',
+        'bisquick',
+        'bread',
+        'brisket',
+        'brown rice',
+        'bulk italian sausag',
+        'buns',
+        'cake',
+        'catfish',
+        'cheese',
+        'cheese slices',
+        'cheese soup',
+        'chicken',
+        'chips',
+        'chuck',
+        'cod',
+        'cooked rice',
+        'cooking spray',
+        'corn husks',
+        'corn starch',
+        'cornflour',
+        'cornish hens',
+        'cornmeal',
+        'cream of celery soup',
+        'cream of chicken soup',
+        'cutlet',
+        'dough',
+        'dressing',
+        'duck',
+        'dumpling wrappers',
+        'egg noodles, cooked and drained',
+        'egg roll wrappers',
+        'egg roll wraps',
+        'english muffins',
+        'essence',
+        'fat',
+        'fettuccine pasta',
+        'fettuccini',
+        'filet',
+        'filet mignon',
+        'fillets',
+        'fish',
+        'flavoring',
+        'florets',
+        'flounder',
+        'flour',
+        'french baguett',
+        'french onion soup',
+        'frozen mix veget',
+        'fryer chickens',
+        'gelatin',
+        'grating cheese',
+        'grits',
+        'ground meat',
+        'ground round',
+        'ground sausage',
+        'halibut',
+        'hamburger',
+        'hominy',
+        'hot dog bun',
+        'hot dogs',
+        'ice',
+        'ice cream',
+        'italian sauce',
+        'jasmine rice',
+        'juice',
+        'kraft miracle whip dressing',
+        'lamb',
+        'lasagna noodles',
+        'lasagna noodles, cooked and drained',
+        'liquid',
+        'loin',
+        'long-grain rice',
+        'macaroni',
+        'mahi mahi',
+        'manicotti',
+        'margarine',
+        'marinade',
+        'meat',
+        'meat tenderizer',
+        'meatballs',
+        'minute rice',
+        'nonstick spray',
+        'noodles',
+        'oil',
+        'orzo',
+        'pasta',
+        'pasta sauce',
+        'pastry',
+        'phyllo',
+        'pie crust',
+        'pie shell',
+        'pitas',
+        'pizza crust',
+        'pizza doughs',
+        'pizza sauce',
+        'polenta',
+        'pork',
+        'potato chips',
+        'potato starch',
+        'prebaked pizza crusts',
+        'pretzel stick',
+        'processed cheese',
+        'quail',
+        'ragu pasta sauc',
+        'red food coloring',
+        'red snapper',
+        'refrigerated piecrusts',
+        'rib',
+        'rice',
+        'rice paper',
+        'rice sticks',
+        'roast',
+        'roasting chickens',
+        'rolls',
+        'round steaks',
+        'rub',
+        'rump roast',
+        'rump steak',
+        'salad',
+        'salmon',
+        'salt',
+        'sauce',
+        'sausage casings',
+        'seasoning',
+        'shells',
+        'short-grain rice',
+        'shortening',
+        'sirloin',
+        'sole',
+        'soup',
+        'soup mix',
+        'spaghetti, cook and drain',
+        'spam',
+        'spareribs',
+        'spices',
+        'spring roll wrappers',
+        'steak',
+        'steamed rice',
+        'stew meat',
+        'strip steaks',
+        'stuffing mix',
+        'sushi rice',
+        'sweetener',
+        'swordfish',
+        'taco shells',
+        'textured soy protein',
+        'tilapia',
+        'toast',
+        'tomato soup',
+        'tortilla chips',
+        'tortillas',
+        'trout',
+        'tuna',
+        'turkey',
+        'udon',
+        'veal',
+        'vegetables',
+        'veggies',
+        'venison',
+        'water',
+        'wheat',
+        'wheat bread',
+        'white rice',
+        'whitefish',
+        'wide egg noodles',
+        'wonton skins',
+        'wonton wrappers',
+        'yeast',
+        'yellow corn meal'
+    ]
 
 
 def build_test_recipes(ids, ingredients):
@@ -25,19 +214,17 @@ def build_test_recipes(ids, ingredients):
 
 
 def remove_ingredients(recipes, graph):
-    new_recipes = []
-    left_out_ingredients = []
+    divided_recipes = []
     for ingredients in recipes:
         shuffled = np.random.permutation(ingredients)
         for i in xrange(len(shuffled)):
-            if shuffled[i] in graph.ingredient_names:
-                # found an ingredient that is in the graph, so make a new recipe from its omission
+            if shuffled[i] in graph.ingredient_names and shuffled[i] not in do_not_recommend:
+                # found an ingredient that is in the graph and not blacklisted, so make a new recipe from its omission
                 shuffled_l = list(shuffled)
                 left_out = shuffled_l.pop(i)
-                new_recipes.append(shuffled_l)
-                left_out_ingredients.append(left_out)
+                divided_recipes.append((shuffled_l, left_out))
 
-    return new_recipes, left_out_ingredients
+    return divided_recipes
 
 
 def get_recommendations(input_ingredients, flavor, nrecommendations):
@@ -69,9 +256,9 @@ def get_recommendations(input_ingredients, flavor, nrecommendations):
                 ingredient1 = row[0].lower()
                 ingredient2 = row[1].lower()
                 pmi = row[2]
-                if ingredient1 not in input_ingredients:  # don't recommend ingredients already in the recipe
+                if ingredient1 not in input_ingredients and ingredient1 not in do_not_recommend:
                     ingredient_pmi[ingredient1] += pmi
-                elif ingredient2 not in input_ingredients:
+                elif ingredient2 not in input_ingredients and ingredient2 not in do_not_recommend:
                     ingredient_pmi[ingredient2] += pmi
 
     ingredient_pmi.sort(ascending=False)
@@ -98,6 +285,49 @@ def get_recommendations(input_ingredients, flavor, nrecommendations):
 
     return recommended_ingredients
 
+
+def recommend_random_ingredient(input_ingredients, graph, nrecommendations):
+    random = np.random.permutation(graph.ingredient_names)
+    recommended = []
+    for ingredient in random:
+        if ingredient not in input_ingredients and ingredient not in do_not_recommend:
+            recommended.append(ingredient)
+        if len(recommended) == nrecommendations:
+            break
+
+    return recommended
+
+
+def recommend_common_ingredient(input_ingredients, graph, nrecommendations):
+    sorted_idx = np.argsort(graph.train_marginal)[::-1]
+    sorted_ingredients = np.array(graph.ingredient_names)[sorted_idx]
+    recommended = []
+    for ingredient in sorted_ingredients:
+        if ingredient not in input_ingredients and ingredient not in do_not_recommend:
+            recommended.append(ingredient)
+        if len(recommended) == nrecommendations:
+            break
+
+    return recommended
+
+
+def get_all_recommendations(args):
+    test_recipe, left_out_ingredient = args
+    recommended = get_recommendations(test_recipe, 'any', 10)
+    random = recommend_random_ingredient(test_recipe, graph, 10)
+    common = recommend_common_ingredient(test_recipe, graph, 10)
+    recommended_graph = False
+    recommended_random = False
+    recommended_common = False
+    if left_out_ingredient in recommended:
+        recommended_graph = True
+    if left_out_ingredient in random:
+        recommended_random = True
+    if left_out_ingredient in common:
+        recommended_common = True
+
+    return recommended_graph, recommended_random, recommended_common
+
 print "Loading data..."
 graph = IngredientGraph(verbose=True, nprior=1e4)
 graph.load_ingredient_map()
@@ -106,6 +336,8 @@ ids2, ingredients2 = graph.load_ingredients()  # ingredient labels as sauces or 
 ids2 = list(np.array(ids2) + np.max(ids1) + 1)
 ids1.extend(ids2)
 ingredients1.extend(ingredients2)
+
+print 'Found', len(np.unique(ids1)), 'recipes and', len(np.unique(ingredients1)), 'ingredients.'
 
 # train / test split
 print 'Doing train/test split...'
@@ -127,8 +359,12 @@ for recipe_id in uids_test:
     ids_test.extend(ids[ids == recipe_id])
     ing_test.extend(ingredients[ids == recipe_id])
 
+print 'Using', len(np.unique(ids_train)), 'unique recipes for the training set and', len(np.unique(ids_test)), \
+    'unique recipes for the test set.'
+
 # train the graph
 X_train = graph.build_design_matrix(ids_train, ing_train, min_counts=50)
+print 'Training X shape:', X_train.shape
 print 'Learning graph...'
 graph.fit(X_train)
 
@@ -136,22 +372,27 @@ graph.fit(X_train)
 print 'Building the test recipes...'
 recipes = build_test_recipes(ids_test, ing_test)
 print 'Building the test set...'
-test_recipes, left_out_ingredients = remove_ingredients(recipes, graph)
+args = remove_ingredients(recipes, graph)
 
 # now find fraction of times left-out ingredient is recommended in the top 25% vs a random recommendation
 nrecommended = 0
 nrandom = 0
-print 'Analyzing test set of', len(test_recipes), 'recipes...'
-for i in xrange(len(test_recipes)):
-    print i
-    recommended = get_recommendations(test_recipes[i], 'any', 25)
-    random = np.random.permutation(graph.ingredient_names)[0]
-    if left_out_ingredients[i] in recommended:
-        nrecommended += 1
-    if left_out_ingredients[i] in random:
-        nrecommended += 1
+ncommon = 0
+n_jobs = 7
+print 'Analyzing test set of', len(args), 'recipes...'
 
-print 'Recommended left out ingredient in top 25', nrecommended, 'times out of', len(test_recipes), \
-    '(' + str(100.0 * float(nrecommended) / len(test_recipes)) + '%)'
-print 'Recommended left out ingredient in top 25', nrandom, 'times out of', len(test_recipes), \
-    ' for random recommendations (' + str(100.0 * float(nrandom) / len(test_recipes)) + '%)'
+pool = multiprocessing.Pool(n_jobs)
+if n_jobs > 1:
+    recommendations = pool.map(get_all_recommendations, args)
+else:
+    recommendations = map(get_all_recommendations, args)
+
+recommendations = np.array(recommendations)
+nrecommended = recommendations.sum(axis=0)
+
+print 'Recommended left out ingredient in top 10', nrecommended[0], 'times out of', len(args), \
+    '(' + str(100.0 * float(nrecommended[0]) / len(args)) + '%)'
+print 'Recommended left out ingredient in top 10', nrecommended[1], 'times out of', len(args), \
+    ' for random recommendations (' + str(100.0 * float(nrecommended[1]) / len(args)) + '%)'
+print 'Recommended left out ingredient in top 10', nrecommended[2], 'times out of', len(args), \
+    ' when recommending most common ingredients (' + str(100.0 * float(nrecommended[2]) / len(args)) + '%)'
