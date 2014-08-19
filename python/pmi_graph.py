@@ -119,44 +119,53 @@ class PMIGraph(BaseEstimator):
         else:
             similarity = self.pmi
             similarity[np.diag_indices_from(similarity)] = 1.1 * similarity.max()
-        clustering = AffinityPropagation(affinity='precomputed', verbose=self.verbose)
+        clustering = AffinityPropagation(affinity='precomputed', verbose=self.verbose,
+                                         preference=similarity.min())
         clusters = clustering.fit_predict(similarity)
         if self.verbose:
             print 'Found', len(np.unique(clusters)), 'clusters.'
 
         return clusters
 
-    def visualize(self, cluster=False):
+    def visualize(self, cluster=False, savefile=None, doshow=True, seed=None, node_labels=None, label_idx=None):
+        if node_labels is None:
+            node_labels = []
+        if label_idx is None:
+            label_idx = []
+        if len(label_idx) != len(node_labels):
+            raise ValueError("Length of node_labels must be the same as label_idx.")
+
         # use normalized PMI for similarity metric
         similarity = self.pmi / -np.log(self.joint_probs)
         similarity[np.diag_indices_from(similarity)] = 1.0
 
         # compute the 2-d manifold and the projection of the data onto it. this defines the node positions
         distance = -(similarity - 1.0)  # convert to [-2.0, 0.0] and then make positive
-        node_position_model = manifold.TSNE(verbose=self.verbose, metric='precomputed')
+        node_position_model = manifold.TSNE(verbose=self.verbose, metric='precomputed', learning_rate=100,
+                                            random_state=seed)
         node_positions = node_position_model.fit_transform(distance).T
 
         if cluster:
             # also include cluster information in the visualization
             clusters = self.cluster(normalize=True)
 
-        plt.figure(1, facecolor='b', figsize=(10, 8))
+        plt.figure(1, facecolor='k', figsize=(10, 8))
         plt.clf()
         ax = plt.axes([0., 0., 1., 1.])
         plt.axis('off')
 
         # Plot the nodes using the coordinates of our embedding
-        base_symbol_size = self.train_marginal / self.train_marginal.max() + 0.05
+        base_symbol_size = self.train_marginal / float(self.train_marginal.max()) + 0.05
         if cluster:
             # color ingredient nodes by cluster
-            plt.scatter(node_positions[0], node_positions[1], s=100 * base_symbol_size, c=clusters,
+            plt.scatter(node_positions[0], node_positions[1], s=300 * base_symbol_size, c=clusters,
                         cmap=plt.cm.spectral_r)
         else:
-            plt.scatter(node_positions[0], node_positions[1], s=100 * base_symbol_size,
-                        cmap=plt.cm.spectral_r)
+            plt.scatter(node_positions[0], node_positions[1], s=300 * base_symbol_size,
+                        cmap=plt.cm.spectral_r, c='DodgerBlue')
 
         # Display a graph of ingredients commonly found together based on pointwise mutual information (PMI)
-        non_zero = np.abs(np.triu(similarity, k=1)) > 0.01
+        non_zero = np.triu(similarity, k=1) > np.percentile(similarity[similarity > 0], 95.0)
 
         start_idx, end_idx = np.where(non_zero)
         #a sequence of (*line0*, *line1*, *line2*), where::
@@ -166,17 +175,24 @@ class PMIGraph(BaseEstimator):
         values = similarity[non_zero]
         lc = LineCollection(segments,
                             zorder=0, cmap=plt.cm.hot,
-                            norm=plt.Normalize(0, values.max()))
+                            norm=plt.Normalize(values.min(), np.percentile(values, 95.0)))
         lc.set_array(values)
-        lc.set_linewidths(15 * values)
+        lc.set_linewidths(2 * values)
         ax.add_collection(lc)
+        # plt.colorbar(lc)
+
+        for label, node_idx in zip(node_labels, label_idx):
+            plt.text(node_positions[0, node_idx], node_positions[1, node_idx], label, size=14, color='White')
 
         plt.xlim(node_positions[0].min() - .15 * node_positions[0].ptp(),
                  node_positions[0].max() + .10 * node_positions[0].ptp(),)
         plt.ylim(node_positions[1].min() - .03 * node_positions[1].ptp(),
                  node_positions[1].max() + .03 * node_positions[1].ptp())
 
-        plt.show()
+        if savefile is not None:
+            plt.savefig(savefile)
+        if doshow:
+            plt.show()
 
 
 def fit_pmi_graph_cv(X, verbose=False, n_jobs=1, cv=7, doplot=False, graph=None):

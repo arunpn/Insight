@@ -98,11 +98,20 @@ class IngredientGraph(PMIGraph):
         if self.verbose:
             cluster_ids = np.unique(clusters)
             for c_id in cluster_ids:
-                cluster_info = 'Cluster ' + c_id + ':'
-                this_cluster = self.ingredient_names[clusters == c_id]
+                cluster_info = 'Cluster ' + str(c_id) + ':'
+                this_cluster = np.array(self.ingredient_names)[clusters == c_id]
                 for ingredient in this_cluster:
                     cluster_info += ' ' + ingredient + ','
                 print cluster_info
+
+        return clusters
+
+    def visualize(self, cluster=False, savefile=None, doshow=True, seed=None, node_labels=None, label_idx=None):
+        if node_labels is None or label_idx is None:
+            nnodes = 10
+            label_idx = np.random.permutation(len(self.ingredient_names))[0:nnodes]
+            node_labels = np.array(self.ingredient_names)[label_idx]
+        super(IngredientGraph, self).visualize(cluster, savefile, doshow, seed, node_labels, label_idx)
 
 
 if __name__ == "__main__":
@@ -110,6 +119,16 @@ if __name__ == "__main__":
     data_dir = base_dir + 'data/yummly/'
     plot_dir = base_dir + 'plots/'
 
+    load_pickle = True
+    if load_pickle:
+        graph = IngredientGraph()
+        graph = cPickle.load(open(data_dir + 'ingredient_graph.pickle', 'rb'))
+        node_labels = ['chicken', 'garlic', 'cream', 'pasta']
+        node_idx = []
+        for label in node_labels:
+            node_idx.append(np.where(np.array(graph.ingredient_names) == label)[0])
+        graph.visualize(cluster=False, node_labels=node_labels, label_idx=node_idx)
+        exit()
     doCV = False
     if doCV:
         graph = IngredientGraph()
