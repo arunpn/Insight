@@ -8,6 +8,7 @@ import pymysql
 from pymysql.err import MySQLError
 import pandas as pd
 import multiprocessing
+import time
 
 do_not_recommend = \
     [
@@ -202,13 +203,20 @@ def build_test_recipes(ids, ingredients):
     recipes = []
     current_id = ids[0]
     this_recipe = []
+    nrecipes = 0
     for id, ingredient in zip(ids, ingredients):
         if id != current_id:
             # finished this recipe, save and move on to the next one
             current_id = id
             recipes.append(this_recipe)
-            this_recipe = []
-        this_recipe.append(ingredient)
+            this_recipe = [ingredient]
+            nrecipes += 1
+        else:
+            this_recipe.append(ingredient)
+
+    recipes.append(this_recipe)
+    nrecipes += 1
+    print len(recipes), nrecipes
 
     return recipes
 
@@ -223,6 +231,7 @@ def remove_ingredients(recipes, graph):
                 shuffled_l = list(shuffled)
                 left_out = shuffled_l.pop(i)
                 divided_recipes.append((shuffled_l, left_out))
+                break
 
     return divided_recipes
 
@@ -316,6 +325,9 @@ def get_all_recommendations(args):
     recommended = get_recommendations(test_recipe, 'any', 10)
     random = recommend_random_ingredient(test_recipe, graph, 10)
     common = recommend_common_ingredient(test_recipe, graph, 10)
+    print 'Recommended:', recommended
+    print 'Random:', random
+    print 'Common:', common
     recommended_graph = False
     recommended_random = False
     recommended_common = False
@@ -327,6 +339,8 @@ def get_all_recommendations(args):
         recommended_common = True
 
     return recommended_graph, recommended_random, recommended_common
+
+t1 = time.clock()
 
 print "Loading data..."
 graph = IngredientGraph(verbose=True, nprior=1e4)
@@ -363,7 +377,7 @@ print 'Using', len(np.unique(ids_train)), 'unique recipes for the training set a
     'unique recipes for the test set.'
 
 # train the graph
-X_train = graph.build_design_matrix(ids_train, ing_train, min_counts=50)
+X_train = graph.build_design_matrix(ids_train, ing_train, min_counts=5)
 print 'Training X shape:', X_train.shape
 print 'Learning graph...'
 graph.fit(X_train)
@@ -371,14 +385,12 @@ graph.fit(X_train)
 # build the test set
 print 'Building the test recipes...'
 recipes = build_test_recipes(ids_test, ing_test)
+print len(recipes)
 print 'Building the test set...'
 args = remove_ingredients(recipes, graph)
 
 # now find fraction of times left-out ingredient is recommended in the top 25% vs a random recommendation
-nrecommended = 0
-nrandom = 0
-ncommon = 0
-n_jobs = 7
+n_jobs = 1
 print 'Analyzing test set of', len(args), 'recipes...'
 
 pool = multiprocessing.Pool(n_jobs)
@@ -396,3 +408,6 @@ print 'Recommended left out ingredient in top 10', nrecommended[1], 'times out o
     ' for random recommendations (' + str(100.0 * float(nrecommended[1]) / len(args)) + '%)'
 print 'Recommended left out ingredient in top 10', nrecommended[2], 'times out of', len(args), \
     ' when recommending most common ingredients (' + str(100.0 * float(nrecommended[2]) / len(args)) + '%)'
+
+t2 = time.clock()
+print 'Took', (t2 - t1) / 60.0 ** 2, 'hours.'

@@ -37,6 +37,7 @@
                      placeholder="e.g., chicken, garlic, onions, tomatoes, ancho, salt">
             </div>
            </div>
+          <!--
           <div>
             <h3>
                 Recommend ingredients that will make this recipe more
@@ -54,6 +55,7 @@
               <input type="radio" name="inlineRadioOptions" id="rany" value="any"> No Preference
             </label>
           </div>
+          -->
           <div>
             <p>
                 Number of ingredients to recommend
@@ -69,13 +71,22 @@
               <button type="submit" class="btn btn-primary btn-small">Recommend Ingredients</button>
           </div>
         </form>
-
-        <table id = "ranklist" class="table table-hover">
+        <div class="col-xs-6">
+          <table id = "input_ingredients" class="table table-condensed table-bordered">
+            <tr><th>Input Ingredients</th></tr>
+            {% for ingredient in seed_recipe %}
+            <tr><td>{{ ingredient }}</td></tr>
+            {% endfor %}
+    	  </table>
+        </div>
+        <div class="col-xs-6">
+          <table id = "ranklist" class="table table-condensed table-hover table-bordered">
             <tr><th>Recommended Ingredients</th></tr>
             {% for ingredient in ingredients %}
             <tr><td>{{ ingredient }}</td></tr>
             {% endfor %}
-    	</table>
+    	  </table>
+        </div>
 
     </div><!-- /.container -->
 

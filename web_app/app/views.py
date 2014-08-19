@@ -64,8 +64,9 @@ def index_product():
 @app.route("/recommendation", methods=['GET'])
 def index_recommendation():
     ingredient_input = request.args.get('ingredient_input')
-    input_ingredients = get_ingredients(ingredient_input)
-    flavor_type = request.args.get('inlineRadioOptions')
+    seed_recipe = get_ingredients(ingredient_input)
+    # flavor_type = request.args.get('inlineRadioOptions')
+    flavor_type = 'any'
     ningredients = int(request.args.get('ingredient_number'))
-    ingredients = get_recommendations(input_ingredients, flavor_type, ningredients)
-    return render_template('recommendation.html', ingredients=ingredients)
+    ingredients = get_recommendations(seed_recipe, flavor_type, ningredients)
+    return render_template('recommendation.html', ingredients=ingredients, seed_recipe=seed_recipe)

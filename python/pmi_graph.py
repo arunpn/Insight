@@ -134,7 +134,7 @@ class PMIGraph(BaseEstimator):
         # compute the 2-d manifold and the projection of the data onto it. this defines the node positions
         distance = -(similarity - 1.0)  # convert to [-2.0, 0.0] and then make positive
         node_position_model = manifold.TSNE(verbose=self.verbose, metric='precomputed')
-        node_positions = node_position_model.fit_transform(distance)
+        node_positions = node_position_model.fit_transform(distance).T
 
         if cluster:
             # also include cluster information in the visualization
@@ -147,63 +147,36 @@ class PMIGraph(BaseEstimator):
 
         # Plot the nodes using the coordinates of our embedding
         base_symbol_size = self.train_marginal / self.train_marginal.max() + 0.05
-        plt.scatter(node_positions[:, 0], node_positions[:, 1], s=100 * base_symbol_size, c=labels,
-                    cmap=plt.cm.spectral)
+        if cluster:
+            # color ingredient nodes by cluster
+            plt.scatter(node_positions[0], node_positions[1], s=100 * base_symbol_size, c=clusters,
+                        cmap=plt.cm.spectral_r)
+        else:
+            plt.scatter(node_positions[0], node_positions[1], s=100 * base_symbol_size,
+                        cmap=plt.cm.spectral_r)
 
-        # Display a graph of the connected ingredients based on pointwise mutual information (PMI)
+        # Display a graph of ingredients commonly found together based on pointwise mutual information (PMI)
         non_zero = np.abs(np.triu(similarity, k=1)) > 0.01
 
-        # Plot the edges
         start_idx, end_idx = np.where(non_zero)
         #a sequence of (*line0*, *line1*, *line2*), where::
         #            linen = (x0, y0), (x1, y1), ... (xm, ym)
-        segments = [[embedding[:, start], embedding[:, stop]]
+        segments = [[node_positions[:, start], node_positions[:, stop]]
                     for start, stop in zip(start_idx, end_idx)]
-        values = np.abs(partial_correlations[non_zero])
+        values = similarity[non_zero]
         lc = LineCollection(segments,
-                            zorder=0, cmap=plt.cm.hot_r,
-                            norm=plt.Normalize(0, .7 * values.max()))
+                            zorder=0, cmap=plt.cm.hot,
+                            norm=plt.Normalize(0, values.max()))
         lc.set_array(values)
         lc.set_linewidths(15 * values)
         ax.add_collection(lc)
 
-        # Add a label to each node. The challenge here is that we want to
-        # position the labels to avoid overlap with other labels
-        for index, (name, label, (x, y)) in enumerate(
-                zip(names, labels, embedding.T)):
-
-            dx = x - embedding[0]
-            dx[index] = 1
-            dy = y - embedding[1]
-            dy[index] = 1
-            this_dx = dx[np.argmin(np.abs(dy))]
-            this_dy = dy[np.argmin(np.abs(dx))]
-            if this_dx > 0:
-                horizontalalignment = 'left'
-                x = x + .002
-            else:
-                horizontalalignment = 'right'
-                x = x - .002
-            if this_dy > 0:
-                verticalalignment = 'bottom'
-                y = y + .002
-            else:
-                verticalalignment = 'top'
-                y = y - .002
-            plt.text(x, y, name, size=10,
-                     horizontalalignment=horizontalalignment,
-                     verticalalignment=verticalalignment,
-                     bbox=dict(facecolor='w',
-                               edgecolor=plt.cm.spectral(label / float(n_labels)),
-                               alpha=.6))
-
-        plt.xlim(embedding[0].min() - .15 * embedding[0].ptp(),
-                 embedding[0].max() + .10 * embedding[0].ptp(),)
-        plt.ylim(embedding[1].min() - .03 * embedding[1].ptp(),
-                 embedding[1].max() + .03 * embedding[1].ptp())
+        plt.xlim(node_positions[0].min() - .15 * node_positions[0].ptp(),
+                 node_positions[0].max() + .10 * node_positions[0].ptp(),)
+        plt.ylim(node_positions[1].min() - .03 * node_positions[1].ptp(),
+                 node_positions[1].max() + .03 * node_positions[1].ptp())
 
         plt.show()
-
 
 
 def fit_pmi_graph_cv(X, verbose=False, n_jobs=1, cv=7, doplot=False, graph=None):
