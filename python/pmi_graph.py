@@ -127,7 +127,8 @@ class PMIGraph(BaseEstimator):
 
         return clusters
 
-    def visualize(self, cluster=False, savefile=None, doshow=True, seed=None, node_labels=None, label_idx=None):
+    def visualize(self, cluster=False, savefile=None, doshow=True, seed=None, node_labels=None, label_idx=None,
+                  mark_nodes=False):
         if node_labels is None:
             node_labels = []
         if label_idx is None:
@@ -182,7 +183,11 @@ class PMIGraph(BaseEstimator):
         # plt.colorbar(lc)
 
         for label, node_idx in zip(node_labels, label_idx):
-            plt.text(node_positions[0, node_idx], node_positions[1, node_idx], label, size=14, color='White')
+            if mark_nodes:
+                plt.scatter(node_positions[0, node_idx], node_positions[1, node_idx], s=500, c='Green')
+            plt.text(node_positions[0, node_idx] + 0.02 * node_positions[0].ptp(),
+                     node_positions[1, node_idx] + 0.02 * node_positions[1].ptp(),
+                     label, size=20, color='White')
 
         plt.xlim(node_positions[0].min() - .15 * node_positions[0].ptp(),
                  node_positions[0].max() + .10 * node_positions[0].ptp(),)
@@ -190,9 +195,11 @@ class PMIGraph(BaseEstimator):
                  node_positions[1].max() + .03 * node_positions[1].ptp())
 
         if savefile is not None:
-            plt.savefig(savefile)
+            plt.savefig(savefile, facecolor='k', edgecolor='Yellow')
         if doshow:
             plt.show()
+
+        return ax, node_positions
 
 
 def fit_pmi_graph_cv(X, verbose=False, n_jobs=1, cv=7, doplot=False, graph=None):

@@ -7,6 +7,195 @@ import pymysql
 from pymysql.err import MySQLError
 import os
 import cPickle
+import matplotlib.pyplot as plt
+
+do_not_recommend = \
+    [
+        'angel hair',
+        'arborio rice',
+        'artichoke heart marin',
+        'back ribs',
+        'baguette',
+        'baking mix',
+        'baking powder',
+        'baking soda',
+        'basmati rice',
+        'bass',
+        'bean threads',
+        'beef',
+        'bertolli alfredo sauc',
+        'bertolli tomato & basil sauc',
+        'biscuits',
+        'bisquick',
+        'bread',
+        'brisket',
+        'brown rice',
+        'bulk italian sausag',
+        'buns',
+        'cake',
+        'catfish',
+        'cheese',
+        'cheese slices',
+        'cheese soup',
+        'chicken',
+        'chips',
+        'chuck',
+        'cod',
+        'cooked rice',
+        'cooking spray',
+        'corn husks',
+        'corn starch',
+        'cornflour',
+        'cornish hens',
+        'cornmeal',
+        'cream of celery soup',
+        'cream of chicken soup',
+        'cutlet',
+        'dough',
+        'dressing',
+        'duck',
+        'dumpling wrappers',
+        'egg noodles, cooked and drained',
+        'egg roll wrappers',
+        'egg roll wraps',
+        'english muffins',
+        'essence',
+        'fat',
+        'fettuccine pasta',
+        'fettuccini',
+        'filet',
+        'filet mignon',
+        'fillets',
+        'fish',
+        'flavoring',
+        'florets',
+        'flounder',
+        'flour',
+        'french baguett',
+        'french onion soup',
+        'frozen mix veget',
+        'fryer chickens',
+        'gelatin',
+        'grating cheese',
+        'grits',
+        'ground meat',
+        'ground round',
+        'ground sausage',
+        'halibut',
+        'hamburger',
+        'hominy',
+        'hot dog bun',
+        'hot dogs',
+        'ice',
+        'ice cream',
+        'italian sauce',
+        'jasmine rice',
+        'juice',
+        'kraft miracle whip dressing',
+        'lamb',
+        'lasagna noodles',
+        'lasagna noodles, cooked and drained',
+        'liquid',
+        'loin',
+        'long-grain rice',
+        'macaroni',
+        'mahi mahi',
+        'manicotti',
+        'margarine',
+        'marinade',
+        'meat',
+        'meat tenderizer',
+        'meatballs',
+        'minute rice',
+        'nonstick spray',
+        'noodles',
+        'oil',
+        'orzo',
+        'pasta',
+        'pasta sauce',
+        'pastry',
+        'phyllo',
+        'pie crust',
+        'pie shell',
+        'pitas',
+        'pizza crust',
+        'pizza doughs',
+        'pizza sauce',
+        'polenta',
+        'pork',
+        'potato chips',
+        'potato starch',
+        'prebaked pizza crusts',
+        'pretzel stick',
+        'processed cheese',
+        'quail',
+        'ragu pasta sauc',
+        'red food coloring',
+        'red snapper',
+        'refrigerated piecrusts',
+        'rib',
+        'rice',
+        'rice paper',
+        'rice sticks',
+        'roast',
+        'roasting chickens',
+        'rolls',
+        'round steaks',
+        'rub',
+        'rump roast',
+        'rump steak',
+        'salad',
+        'salmon',
+        'salt',
+        'sauce',
+        'sausage casings',
+        'seasoning',
+        'shells',
+        'short-grain rice',
+        'shortening',
+        'sirloin',
+        'sole',
+        'soup',
+        'soup mix',
+        'spaghetti, cook and drain',
+        'spam',
+        'spareribs',
+        'spices',
+        'spring roll wrappers',
+        'steak',
+        'steamed rice',
+        'stew meat',
+        'strip steaks',
+        'stuffing mix',
+        'sushi rice',
+        'sweetener',
+        'swordfish',
+        'taco shells',
+        'textured soy protein',
+        'tilapia',
+        'toast',
+        'tomato soup',
+        'tortilla chips',
+        'tortillas',
+        'trout',
+        'tuna',
+        'turkey',
+        'udon',
+        'veal',
+        'vegetables',
+        'veggies',
+        'venison',
+        'water',
+        'wheat',
+        'wheat bread',
+        'white rice',
+        'whitefish',
+        'wide egg noodles',
+        'wonton skins',
+        'wonton wrappers',
+        'yeast',
+        'yellow corn meal'
+    ]
 
 
 class IngredientGraph(PMIGraph):
@@ -106,12 +295,48 @@ class IngredientGraph(PMIGraph):
 
         return clusters
 
-    def visualize(self, cluster=False, savefile=None, doshow=True, seed=None, node_labels=None, label_idx=None):
+    def visualize(self, cluster=False, savefile=None, doshow=True, seed=None, node_labels=None, label_idx=None,
+                  mark_nodes=False, make_graph_illustration=False):
         if node_labels is None or label_idx is None:
-            nnodes = 10
-            label_idx = np.random.permutation(len(self.ingredient_names))[0:nnodes]
-            node_labels = np.array(self.ingredient_names)[label_idx]
-        super(IngredientGraph, self).visualize(cluster, savefile, doshow, seed, node_labels, label_idx)
+            random_idx = np.random.permutation(len(self.ingredient_names))
+            label_idx = []
+            node_labels = []
+            for idx in random_idx:
+                if self.ingredient_names[idx] not in do_not_recommend:
+                    node_labels.append(self.ingredient_names[idx])
+                    label_idx.append(idx)
+                    if len(node_labels) == nnodes:
+                        break
+        ax, node_positions = \
+            super(IngredientGraph, self).visualize(cluster, savefile, doshow, seed, node_labels, label_idx, mark_nodes)
+
+        if make_graph_illustration:
+            node_labels = ['chicken', 'garlic', 'cream', 'pasta']
+            node_idx = []
+            for i, label in enumerate(node_labels):
+                node_idx.append(np.where(np.array(graph.ingredient_names) == label)[0])
+                plt.scatter(node_positions[0, node_idx[i]], node_positions[1, node_idx[i]], s=500, c='Green')
+                plt.text(node_positions[0, node_idx[i]] + 0.02 * node_positions[0].ptp(),
+                         node_positions[1, node_idx[i]] + 0.02 * node_positions[1].ptp(),
+                         label, size=20, color='White')
+
+            recom_labels = ['gorgonzola', 'vodka', 'prosciutto', 'parmigiano', 'marsala']
+            recom_idx = []
+            for i, label in enumerate(recom_labels):
+                recom_idx.append(np.where(np.array(graph.ingredient_names) == label)[0])
+                for node in node_idx:
+                    plt.plot([node_positions[0, recom_idx[i]], node_positions[0, node]],
+                             [node_positions[1, recom_idx[i]], node_positions[1, node]], '-', color='Magenta', lw=3)
+                plt.scatter(node_positions[0, node_idx], node_positions[1, node_idx], s=500, c='Green')
+                plt.scatter(node_positions[0, recom_idx[i]], node_positions[1, recom_idx[i]], s=500, c='Orange')
+                plt.text(node_positions[0, recom_idx[i]] + 0.02 * node_positions[0].ptp(),
+                         node_positions[1, recom_idx[i]] + 0.02 * node_positions[1].ptp(),
+                         label, size=20, color='White')
+
+            plt.savefig(data_dir + 'recommendation_graph.png')
+            plt.show()
+
+        return ax, node_positions
 
 
 if __name__ == "__main__":
@@ -127,7 +352,8 @@ if __name__ == "__main__":
         node_idx = []
         for label in node_labels:
             node_idx.append(np.where(np.array(graph.ingredient_names) == label)[0])
-        graph.visualize(cluster=False, node_labels=node_labels, label_idx=node_idx)
+        graph.visualize(cluster=False, seed=213, node_labels=[], label_idx=[],
+                        savefile=plot_dir + 'ingredient_graph.png', doshow=False, make_graph_illustration=True)
         exit()
     doCV = False
     if doCV:
