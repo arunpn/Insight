@@ -333,7 +333,7 @@ class IngredientGraph(PMIGraph):
                          node_positions[1, recom_idx[i]] + 0.02 * node_positions[1].ptp(),
                          label, size=20, color='White')
 
-            plt.savefig(data_dir + 'recommendation_graph.png')
+            plt.savefig(plot_dir + 'recommendation_graph.png', facecolor='k', edgecolor='Yellow')
             plt.show()
 
         return ax, node_positions
