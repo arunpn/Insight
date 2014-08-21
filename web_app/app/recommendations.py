@@ -212,6 +212,7 @@ def get_ingredients(ingredient_input):
     ingredients = []
     conn = mdb.connect('localhost', 'root', '', 'recipes')
     cur = conn.cursor()
+    unknown_ingredients = []
     for input_ingredient in input_ingredients:
         # test if the ingredient is mapped to a different ingredient
         cur.execute("SELECT Ingredient FROM Ingredient_Map WHERE Yummly_Ingredient = '" + input_ingredient + "'")
@@ -219,11 +220,12 @@ def get_ingredients(ingredient_input):
         if len(rows) == 0:
             # ingredient not in ingredient map, just use it's value
             ingredient = input_ingredient
+            unknown_ingredients.append(input_ingredient)
         else:
             ingredient = rows[0][0]
         ingredients.append(ingredient)
 
-    return ingredients
+    return ingredients, unknown_ingredients
 
 
 def get_recommendations(input_ingredients, flavor, nrecommendations):
@@ -283,6 +285,7 @@ def get_recommendations(input_ingredients, flavor, nrecommendations):
     recommended_ingredients = recommended_ingredients[:nrecommendations]
 
     return recommended_ingredients
+
 
 if __name__ == "__main__":
     # test usage

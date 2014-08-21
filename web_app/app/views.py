@@ -5,68 +5,47 @@ from app import app
 import pymysql as mdb
 from recommendations import get_ingredients, get_recommendations
 
-db = mdb.connect(user="root", host="localhost", db="world_innodb", charset='utf8')
-recipes_db = mdb.connect(user="root", host="localhost", db="recipes", charset="utf8")
-
-@app.route('/')
-@app.route('/index')
-def index():
-    return render_template("index.html", title='Home', user={'nickname': 'Miguel'}, )
-
-@app.route('/db')
-def cities_page():
-    with db:
-        cur = db.cursor()
-        cur.execute("SELECT Name FROM city LIMIT 15;")
-        query_results = cur.fetchall()
-    cities = ""
-    for result in query_results:
-        cities += result[0]
-        cities += "<br>"
-    return cities
-
-@app.route("/db_fancy")
-def cities_page_fancy():
-    with db:
-        cur = db.cursor()
-        cur.execute("SELECT Name, CountryCode, Population FROM city ORDER BY Population LIMIT 15;")
-
-        query_results = cur.fetchall()
-    cities = []
-    for result in query_results:
-        cities.append(dict(name=result[0], country=result[1], population=result[2]))
-    return render_template('cities.html', cities=cities)
-
-@app.route("/jquery")
-def index_jquery():
-    return render_template('index_js.html')
-
-@app.route("/db_json")
-def cities_json():
-    with db:
-        cur = db.cursor()
-        cur.execute("SELECT Name, CountryCode, Population FROM city")
-        query_results = cur.fetchall()
-    cities = []
-    for result in query_results:
-        cities.append(dict(City=result[0], CountryCode=result[1], Population=result[2]))
-
-    return jsonify(dict(cities=cities))
-
-@app.route("/mvp")
-def index_mvp():
-    return render_template('mvp.html')
-
-@app.route("/product", methods=['POST', 'GET'])
+@app.route("/", methods=['POST', 'GET'])
+@app.route("/index", methods=['POST', 'GET'])
 def index_product():
     return render_template('product.html')
 
 @app.route("/recommendation", methods=['GET'])
 def index_recommendation():
     ingredient_input = request.args.get('ingredient_input')
-    seed_recipe = get_ingredients(ingredient_input)
+    seed_recipe, unknown_ingredients = get_ingredients(ingredient_input)
     # flavor_type = request.args.get('inlineRadioOptions')
     flavor_type = 'any'
     ningredients = int(request.args.get('ingredient_number'))
     ingredients = get_recommendations(seed_recipe, flavor_type, ningredients)
-    return render_template('recommendation.html', ingredients=ingredients, seed_recipe=seed_recipe)
+    unknown_list = []
+    if len(unknown_ingredients):
+        # html_alert += '<div class="alert alert-warning" role="alert">'
+        # html_alert += '<strong>Warning:</strong> Could not find the ingredients '
+        for i, ingredient in enumerate(unknown_ingredients):
+            string = ingredient
+            if i == len(unknown_ingredients) - 1:
+                string += '. '
+            else:
+                string += ', '
+            unknown_list.append(unicode(string))
+    print unknown_list
+    if len(unknown_list) > 0:
+        warning_message = True
+    else:
+        warning_message = False
+    return render_template('recommendation.html', ingredients=ingredients, seed_recipe=seed_recipe,
+                           unknown_ingredients=unknown_list, warning_message=warning_message)
+
+@app.route("/ingredient_list")
+def index_ingredients():
+    recipes_db = mdb.connect(user="root", host="localhost", db="recipes", charset="utf8")
+    cur = recipes_db.cursor()
+    sql = "SELECT DISTINCT Ingredient2 FROM Ingredient_Graph"
+    cur.execute(sql)
+    rows = cur.fetchall()
+    ingredients = []
+    for row in rows:
+        ingredients.append(row[0])
+
+    return render_template('ingredient_list.html', ingredients=ingredients)

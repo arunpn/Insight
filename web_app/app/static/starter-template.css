@@ -1,7 +1,13 @@
 body {
   padding-top: 50px;
+  background: url("ingredients.jpg") no-repeat center center fixed;
 }
 .starter-template {
   padding: 40px 15px;
-  text-align: center;
+}
+.well {
+   background-color: rgba(245, 245, 245, 0.75);
+}
+.table {
+font-size: 18px
 }

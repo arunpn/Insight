@@ -7,14 +7,13 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>theflavory.me: An ingredient recommendation factory</title>
+    <title>The Flavory: An ingredient recommendation factory</title>
 
     <!-- Bootstrap core CSS -->
     <link href="static/css/bootstrap.css" rel="stylesheet">
 
-    <!-- Custom styles for this template -->
+    <!-- Custom styles for this template --->
     <link href="static/starter-template.css" rel="stylesheet">
-
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -28,49 +27,58 @@
     <div class="container">
 
       <div class="starter-template">
-        <h1>theflavory.me: An ingredient recommendation factory.</h1>
-        <form class="form-horizontal" method="GET" action="/recommendation" role="form">
-          <div class="form-group">
-            <label class="col-sm-2 control-label">Comma-separated list of ingredients or link to Yummly recipe</label>
-            <div class="col-sm-10">
-              <input type="text" class="form-control" name="ingredient_input"
-                     placeholder="e.g., chicken, garlic, onions, tomatoes, ancho, salt">
+        <div class="row">
+            <div class="well">
+               <h1>The Flavory: An ingredient recommendation factory.</h1>
             </div>
-          </div>
-          <!--
-          <div>
-            <h3>
-                Recommend ingredients that will make this recipe more
-            </h3>
-            <label class="radio-inline">
-              <input type="radio" name="inlineRadioOptions" id="rsweet" value="sweet"> Sweet
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="inlineRadioOptions" id="rsavory" value="savory"> Savory
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="inlineRadioOptions" id="rpiquant" value="piquant"> Piquant
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="inlineRadioOptions" id="rany" value="any"> No Preference
-            </label>
-          </div>
-          -->
-          <div>
-            <p>
-                Number of ingredients to recommend
-                <select class="form-control-inline" name="ingredient_number">
-                  <option>5</option>
-                  <option>10</option>
-                  <option>25</option>
-                  <option>50</option>
-                </select>
-            </p>
-          </div>
-          <div>
-              <button type="submit" class="btn btn-primary btn-small">Recommend Ingredients</button>
-          </div>
-        </form>
+        </div>
+        <div class="row">
+            <div class="well">
+                <h3>Input a comma-separated list of ingredients or a link to a <a href="http://www.yummly.com">yummly.com</a> recipe.</h3>
+                <form class="form-horizontal" method="GET" action="/recommendation" role="form" id="ingredients_input">
+                  <div class="form-group form-group-lg">
+                    <div class="col-sm-10">
+                      <input type="text" class="form-control input-large" name="ingredient_input"
+                             placeholder="e.g., chicken, garlic, onions, tomatoes, ancho, salt">
+                    </div>
+                  </div>
+                  <!--
+                  <div>
+                    <h3>
+                        Recommend ingredients that will make this recipe more
+                    </h3>
+                    <label class="radio-inline">
+                      <input type="radio" name="inlineRadioOptions" id="rsweet" value="sweet"> Sweet
+                    </label>
+                    <label class="radio-inline">
+                      <input type="radio" name="inlineRadioOptions" id="rsavory" value="savory"> Savory
+                    </label>
+                    <label class="radio-inline">
+                      <input type="radio" name="inlineRadioOptions" id="rpiquant" value="piquant"> Piquant
+                    </label>
+                    <label class="radio-inline">
+                      <input type="radio" name="inlineRadioOptions" id="rany" value="any"> No Preference
+                    </label>
+                  </div>
+                  -->
+                  <div>
+                    <h3>
+                        Number of ingredients to recommend
+                        <select class="form-control-inline input-lg" name="ingredient_number">
+                          <option>5</option>
+                          <option>10</option>
+                          <option>25</option>
+                          <option>50</option>
+                        </select>
+                    </h3>
+                  </div>
+                  <div class="btn-group btn-group-lg">
+                      <button type="submit" class="btn btn-primary">Recommend Ingredients</button>
+                  </div>
+                </form>
+            </div>
+        </div>
+     </div>
 
     </div><!-- /.container -->
 

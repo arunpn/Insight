@@ -7,7 +7,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>theflavory.me: An ingredient recommendation factory.</title>
+    <title>The Flavory: An ingredient recommendation factory.</title>
 
     <!-- Bootstrap core CSS -->
     <link href="static/css/bootstrap.css" rel="stylesheet">
@@ -28,66 +28,84 @@
     <div class="container">
 
       <div class="starter-template">
-        <h1>theflavory.me: An ingredient recommendation factory.</h1>
-        <form class="form-horizontal" method="GET" action="/recommendation" role="form">
-          <div class="form-group">
-            <label class="col-sm-2 control-label">Comma-seperated list of ingredients or link to Yummly recipe</label>
-            <div class="col-sm-10">
-              <input type="text" class="form-control" name="ingredient_input"
-                     placeholder="e.g., chicken, garlic, onions, tomatoes, ancho, salt">
+        <div class="well">
+            <h1>The Flavory: An ingredient recommendation factory.</h1>
+        </div>
+        <div class="well">
+            <h3>Input a comma-separated list of ingredients or a link to a <a href="http://www.yummly.com">yummly.com</a> recipe.</h3>
+            <form class="form-horizontal" method="GET" action="/recommendation" role="form">
+              <div class="form-group form-group-lg">
+                <div class="col-sm-10">
+                  <input type="text" class="form-control" name="ingredient_input"
+                         placeholder="e.g., chicken, garlic, onions, tomatoes, ancho, salt">
+                </div>
+               </div>
+              <!--
+              <div>
+                <h3>
+                    Recommend ingredients that will make this recipe more
+                </h3>
+                <label class="radio-inline">
+                  <input type="radio" name="inlineRadioOptions" id="rsweet" value="sweet"> Sweet
+                </label>
+                <label class="radio-inline">
+                  <input type="radio" name="inlineRadioOptions" id="rsavory" value="savory"> Savory
+                </label>
+                <label class="radio-inline">
+                  <input type="radio" name="inlineRadioOptions" id="rpiquant" value="piquant"> Piquant
+                </label>
+                <label class="radio-inline">
+                  <input type="radio" name="inlineRadioOptions" id="rany" value="any"> No Preference
+                </label>
+              </div>
+              -->
+              <div>
+                <h3>
+                    Number of ingredients to recommend
+                    <select class="form-control-inline input-lg" name="ingredient_number">
+                      <option>5</option>
+                      <option>10</option>
+                      <option>25</option>
+                      <option>50</option>
+                    </select>
+                </h3>
+              </div>
+              <div class="btn-group btn-group-lg">
+                  <button type="submit" class="btn btn-primary">Recommend Ingredients</button>
+              </div>
+            </form>
+        </div>
+        {% if warning_message %}
+        <div class="alert alert-warning" role="alert">
+            <strong>Warning:</strong> Could not find the ingredients
+            {% for ingredient in unknown_ingredients %}
+            {{ ingredient }}
+            {% endfor %}
+            Please refer to the <a href="/ingredient_list" class="alert-link">list of recognized ingredients</a>.
+        </div>
+        {% endif %}
+        <div class="row">
+            <div class="col-xs-6">
+                <div class="well">
+                  <table id = "input_ingredients" class="table table-condensed table-bordered">
+                    <tr><th>Here are the ingredients from your original recipe.</th></tr>
+                    {% for ingredient in seed_recipe %}
+                    <tr><td>{{ ingredient }}</td></tr>
+                    {% endfor %}
+                  </table>
+                </div>
             </div>
-           </div>
-          <!--
-          <div>
-            <h3>
-                Recommend ingredients that will make this recipe more
-            </h3>
-            <label class="radio-inline">
-              <input type="radio" name="inlineRadioOptions" id="rsweet" value="sweet"> Sweet
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="inlineRadioOptions" id="rsavory" value="savory"> Savory
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="inlineRadioOptions" id="rpiquant" value="piquant"> Piquant
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="inlineRadioOptions" id="rany" value="any"> No Preference
-            </label>
-          </div>
-          -->
-          <div>
-            <p>
-                Number of ingredients to recommend
-                <select class="form-control-inline" name="ingredient_number">
-                  <option>5</option>
-                  <option>10</option>
-                  <option>25</option>
-                  <option>50</option>
-                </select>
-            </p>
-          </div>
-          <div>
-              <button type="submit" class="btn btn-primary btn-small">Recommend Ingredients</button>
-          </div>
-        </form>
-        <div class="col-xs-6">
-          <table id = "input_ingredients" class="table table-condensed table-bordered">
-            <tr><th>Input Ingredients</th></tr>
-            {% for ingredient in seed_recipe %}
-            <tr><td>{{ ingredient }}</td></tr>
-            {% endfor %}
-    	  </table>
+            <div class="col-xs-6">
+               <div class="well">
+                  <table id = "ranklist" class="table table-condensed table-hover table-bordered">
+                    <tr><th>Try adding these ingredients to enhance your recipe.</th></tr>
+                    {% for ingredient in ingredients %}
+                    <tr><td>{{ ingredient }}</td></tr>
+                    {% endfor %}
+                  </table>
+                </div>
+            </div>
         </div>
-        <div class="col-xs-6">
-          <table id = "ranklist" class="table table-condensed table-hover table-bordered">
-            <tr><th>Recommended Ingredients</th></tr>
-            {% for ingredient in ingredients %}
-            <tr><td>{{ ingredient }}</td></tr>
-            {% endfor %}
-    	  </table>
-        </div>
-
     </div><!-- /.container -->
 
 
