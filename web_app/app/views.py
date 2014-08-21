@@ -1,7 +1,7 @@
-__author__ = 'brandonkelly'
-
+from flask import Flask
+app = Flask(__name__)
 from flask import render_template, jsonify, request
-from app import app
+#from app import app
 import pymysql as mdb
 from recommendations import get_ingredients, get_recommendations
 
@@ -49,3 +49,6 @@ def index_ingredients():
         ingredients.append(row[0])
 
     return render_template('ingredient_list.html', ingredients=ingredients)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=80)
