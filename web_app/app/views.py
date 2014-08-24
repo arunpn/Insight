@@ -8,10 +8,12 @@ from recommendations import get_ingredients, get_recommendations
 @app.route("/", methods=['POST', 'GET'])
 @app.route("/index", methods=['POST', 'GET'])
 def index_product():
+    # home page: prompt user for a list of ingredients
     return render_template('product.html')
 
 @app.route("/recommendation", methods=['GET'])
 def index_recommendation():
+    # build the ingredient recommendations page
     ingredient_input = request.args.get('ingredient_input')
     seed_recipe, unknown_ingredients = get_ingredients(ingredient_input)
     # flavor_type = request.args.get('inlineRadioOptions')
@@ -39,6 +41,7 @@ def index_recommendation():
 
 @app.route("/ingredient_list")
 def index_ingredients():
+    # display the list of ingredients in the database when the user submits unrecognized ingredients
     recipes_db = mdb.connect(user="root", host="localhost", db="recipes", charset="utf8")
     cur = recipes_db.cursor()
     sql = "SELECT DISTINCT Ingredient2 FROM Ingredient_Graph"

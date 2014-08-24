@@ -200,6 +200,13 @@ do_not_recommend = \
 
 
 def build_test_recipes(ids, ingredients):
+    """
+    Convert the input set of recipe IDs and ingredients into a list of lists, representing a list of recipes.
+
+    :param ids: The recipe ID corresponding to each ingredient.
+    :param ingredients: The list ingredients.
+    :return: A list of lists containing the list of recipes.
+    """
     recipes = []
     current_id = ids[0]
     this_recipe = []
@@ -222,6 +229,13 @@ def build_test_recipes(ids, ingredients):
 
 
 def remove_ingredients(recipes, graph):
+    """
+    Create a new set of recipes by randomly removing one ingredient from each recipe.
+
+    :param recipes: The list of recipes.
+    :param graph: The Ingredient graph object, must contain the list of ingredient names.
+    :return: A list of tuples containing the new recipe and the left-out ingredient.
+    """
     divided_recipes = []
     for ingredients in recipes:
         shuffled = np.random.permutation(ingredients)
@@ -237,6 +251,15 @@ def remove_ingredients(recipes, graph):
 
 
 def get_recommendations(input_ingredients, flavor, nrecommendations):
+    """
+    Compute the list of recommended ingredients by comparing the strengths of the graph edges between the input recipe's
+    ingredients and the ingredients not in the recipe.
+
+    :param input_ingredients: The list of ingredients input by the user, after being filtered by the ingredient map.
+    :param flavor: The desired flavor profile: can be 'sweet', 'savory', 'piquant', or 'any'.
+    :param nrecommendations: The number of recommended ingredients to return.
+    :return: The list of recommended ingredients.
+    """
     conn = pymysql.connect('localhost', 'root', '', 'recipes', charset='utf8')
     cur = conn.cursor()
     potential_ingredients = []
@@ -296,6 +319,14 @@ def get_recommendations(input_ingredients, flavor, nrecommendations):
 
 
 def recommend_random_ingredient(input_ingredients, graph, nrecommendations):
+    """
+    Recommend a set of randomly chosen ingredients to enhance a recipe.
+
+    :param input_ingredients: The ingredients in the user-supplied recipe.
+    :param graph: The IngradientGraph instance, needed for the list of ingredient names.
+    :param nrecommendations: The number of ingredient to recommend.
+    :return: A list of recommended ingredients.
+    """
     random = np.random.permutation(graph.ingredient_names)
     recommended = []
     for ingredient in random:
@@ -308,6 +339,14 @@ def recommend_random_ingredient(input_ingredients, graph, nrecommendations):
 
 
 def recommend_common_ingredient(input_ingredients, graph, nrecommendations):
+    """
+    Recommend the most common ingredients to enhance a recipe.
+
+    :param input_ingredients: The ingredients in the user-supplied recipe.
+    :param graph: The IngradientGraph instance, needed for the list of ingredient names.
+    :param nrecommendations: The number of ingredient to recommend.
+    :return: A list of recommended ingredients, ordered by most commonly used.
+    """
     sorted_idx = np.argsort(graph.train_marginal)[::-1]
     sorted_ingredients = np.array(graph.ingredient_names)[sorted_idx]
     recommended = []
@@ -321,10 +360,19 @@ def recommend_common_ingredient(input_ingredients, graph, nrecommendations):
 
 
 def get_all_recommendations(args):
+    """
+    Check if the left-out ingredient is in the set of ingredients recommended using a trained IngredientGraph instance,
+    recommneded at random, and by recommending the most common ingredients.
+
+    :param args: A tuple containing the recipe and the left-out ingredient.
+    :return: A tuple containing three boolean values. The boolean variables are true if the left-out ingredient is
+        contained within the set of recommendations from the IngredientGraph, made at random, or among the most common
+        ingredients, respectively.
+    """
     test_recipe, left_out_ingredient = args
-    recommended = get_recommendations(test_recipe, 'any', 10)
-    random = recommend_random_ingredient(test_recipe, graph, 10)
-    common = recommend_common_ingredient(test_recipe, graph, 10)
+    recommended = get_recommendations(test_recipe, 'any', 5)
+    random = recommend_random_ingredient(test_recipe, graph, 5)
+    common = recommend_common_ingredient(test_recipe, graph, 5)
     print 'Recommended:', recommended
     print 'Random:', random
     print 'Common:', common
@@ -402,11 +450,11 @@ else:
 recommendations = np.array(recommendations)
 nrecommended = recommendations.sum(axis=0)
 
-print 'Recommended left out ingredient in top 10', nrecommended[0], 'times out of', len(args), \
+print 'Recommended left out ingredient in top 5', nrecommended[0], 'times out of', len(args), \
     '(' + str(100.0 * float(nrecommended[0]) / len(args)) + '%)'
-print 'Recommended left out ingredient in top 10', nrecommended[1], 'times out of', len(args), \
+print 'Recommended left out ingredient in top 5', nrecommended[1], 'times out of', len(args), \
     ' for random recommendations (' + str(100.0 * float(nrecommended[1]) / len(args)) + '%)'
-print 'Recommended left out ingredient in top 10', nrecommended[2], 'times out of', len(args), \
+print 'Recommended left out ingredient in top 5', nrecommended[2], 'times out of', len(args), \
     ' when recommending most common ingredients (' + str(100.0 * float(nrecommended[2]) / len(args)) + '%)'
 
 t2 = time.clock()

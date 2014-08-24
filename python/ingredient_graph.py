@@ -201,6 +201,20 @@ do_not_recommend = \
 class IngredientGraph(PMIGraph):
 
     def __init__(self, nprior=1.0, verbose=False, database='recipes', host='localhost', user='root', passwd=''):
+        """
+        Constructor for the Ingredient graph class. The ingredient graph provides a representation of the association
+        among ingredients, where the nodes represent the ingredients and the edges provide a measure of the chances
+        that two ingredients appear in the same recipe. Specifically, the edges represent the pointwise mutual
+        information between two ingredients.
+
+        :param nprior: The prior sample size, i.e., the graph shrinkage parameter. See the documentation on PMIGraph for
+            further details.
+        :param verbose: Print helpful information?
+        :param database: The name of the database containing the recipes.
+        :param host: The host of the database.
+        :param user: The name of a user that can access the database.
+        :param passwd: The password of the user.
+        """
         super(IngredientGraph, self).__init__(nprior, verbose)
         self.database = database
         self.host = host
@@ -210,10 +224,22 @@ class IngredientGraph(PMIGraph):
         self.ingredient_names = None
 
     def load_ingredient_map(self, table="Ingredient_Map"):
+        """
+        Load the object that maps ingredients to a set of base ingredients and save internally as a data member.
+
+        :param table: The name of the MySQL table containing the ingredient mapping.
+        """
         self.imap = IngredientMapping().from_mysql(table, host=self.host, user=self.user, passwd=self.passwd,
                                                    database=self.database)
 
     def load_ingredients(self, table='Ingredient_List', limit=None):
+        """
+        Load the ingredients used in each recipe, along with the corresponding recipe IDs, from the MySQL database.
+
+        :param table: The name of the table containing the list of ingredients and their recipe IDs.
+        :param limit: If limit is not none, then only this many rows will be returned from the MySQL database.
+        :return: A tuple containing the list of recipes IDs and ingredients.
+        """
         conn = pymysql.connect(self.host, self.user, self.passwd, self.database, charset='utf8')
         cur = conn.cursor()
         sql = "SELECT * FROM " + table
@@ -233,6 +259,19 @@ class IngredientGraph(PMIGraph):
         return recipe_ids, ingredients
 
     def build_design_matrix(self, recipe_ids, ingredients, min_counts=2):
+        """
+        Construct the design matrix used in learning the graph from the input set of recipes and ingredients.
+
+        :param recipe_ids: A list containing the IDs of the recipes for each ingredients.
+        :param ingredients: A list containing the ingredients for each recipe.
+        :param min_counts: The minimum number of recipes that an ingredient must appear in before including it in the
+            graph.
+        :return: The design matrix, and (nrecipes, ningredients) array where nrecipes is the number of unique recipes
+            and ningredients is the number of unique ingredients appearining in at least min_counts recipes.
+        """
+        if len(recipe_ids) != len(ingredients):
+            raise ValueError("Length of recipe_ids and ingredients must by the same.")
+
         unique_ingredients = np.unique(ingredients)
         frequent_ingredients = []
         for j, ingredient in enumerate(unique_ingredients):
@@ -262,6 +301,9 @@ class IngredientGraph(PMIGraph):
         return X
 
     def graph_to_mysql(self):
+        """
+        Dump the graph to a MySQL database.
+        """
         if self.ingredient_names is None:
             raise RuntimeError("Must run self.build_design_matrix() before dumping to MySQL.")
         ningredients = len(self.ingredient_names)
@@ -283,6 +325,13 @@ class IngredientGraph(PMIGraph):
         conn.close()
 
     def cluster(self, normalize=False):
+        """
+        Cluster the ingredients based on their pointwise mutual information as a similarity measure. See the
+        documentation of PMIGraph for further info.
+
+        :param normalize: If true, then normalize the PMI to be between -1 and 1.
+        :return: The cluster labels.
+        """
         clusters = super(IngredientGraph, self).cluster(normalize)
         if self.verbose:
             cluster_ids = np.unique(clusters)
@@ -296,7 +345,23 @@ class IngredientGraph(PMIGraph):
         return clusters
 
     def visualize(self, cluster=False, savefile=None, doshow=True, seed=None, node_labels=None, label_idx=None,
-                  mark_nodes=False, make_graph_illustration=False):
+                  mark_nodes=False, make_graph_illustration=False, nnodes=5):
+        """
+        Visualize the graph structure. The similarity matrix is converted into a 2-d representation of the nodes using
+        the t-distributed stochastic neighbor embedding algorithm.
+
+        :param cluster: If true, then also cluster the ingredients.
+        :param savefile: The name of a file for saving the plot to.
+        :param doshow: The true, then display the plot in a window.
+        :param seed: The random number generator seed.
+        :param node_labels: The labels of a subset of nodes to display.
+        :param label_idx: The indices of the labeled nodes.
+        :param mark_nodes: If true, mark the nodes supplied by node_labels and label_idx.
+        :param make_graph_illustration: If true, illustrate how the graph works by marking the nodes for an example
+            input recipe. This is only used to make the slides illustrating what the backend of theflavory.me does.
+        :param nnodes: The number of nodes to label if not explicitly provided.
+        :return: The matplotlib axis instance and node positions.
+        """
         if node_labels is None or label_idx is None:
             random_idx = np.random.permutation(len(self.ingredient_names))
             label_idx = []

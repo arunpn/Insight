@@ -135,7 +135,10 @@ class IngredientMapping(dict):
         return
 
     def add_ingredients(self, ingredient_list):
-
+        """
+        Add the input set of ingredients to the ingredient map.
+        :param ingredient_list: The list of ingredients to add to the ingredient mapping.
+        """
         ingredients = np.unique(ingredient_list)
         for i in range(len(ingredients)):
             ingredients[i] = ingredients[i].lower()

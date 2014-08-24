@@ -35,7 +35,7 @@ for ingredient in IngMap.keys():
     if IngMap[ingredient] == 'olives':
         IngMap[ingredient] = 'green olives'
 
-# pepper -> black olives
+# pepper -> black pepper
 for ingredient in IngMap.keys():
     if IngMap[ingredient] == 'pepper':
         IngMap[ingredient] = 'black pepper'

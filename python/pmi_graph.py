@@ -1,7 +1,6 @@
 __author__ = 'brandonkelly'
 
 import numpy as np
-import matplotlib.pyplot as plt
 from sklearn.base import BaseEstimator
 from sklearn.grid_search import GridSearchCV
 from sklearn import manifold
@@ -12,6 +11,15 @@ from matplotlib.collections import LineCollection
 
 
 def binomial_loglik(graph, X):
+    """
+    Return the binomial log-likelihood function comparing the number of times two random variables appear together vs.
+    that expected from the estimated joint probabilities. This is used as a score function for choosing the shrinkage
+    parameter of a PMIGraph instance.
+
+    :param graph: A trained instance of the PMIGraph class.
+    :param X: The binary-valued design matrix of dimension (nsamples, nfeatures).
+    :return: The log-likelihood of X conditional on the joint probabilities derived by the input graph.
+    """
     nsamples, nfeatures = X.shape
     npairs = graph.predict(X)
     loglik = 0.0
@@ -26,6 +34,13 @@ def binomial_loglik(graph, X):
 
 class PMIGraph(BaseEstimator):
     def __init__(self, nprior=1.0, verbose=False):
+        """
+        Initialize the graph. The edges are defined to be the pointwise mutual information.
+
+        :param nprior: The prior sample size. This is a shrinkage parameter, as the joint probabilities are shrunk
+            toward independence base on a Beta prior with alpha + beta = nprior.
+        :param verbose: Provide helpful output?
+        """
         self.nprior = nprior
         self.verbose = verbose
         self.train_pairs = None
@@ -112,6 +127,13 @@ class PMIGraph(BaseEstimator):
         return npairs
 
     def cluster(self, normalize=False):
+        """
+        Cluster the nodes based on the PMI similarity measure. The clustering algorithm used is affinity propagation,
+        which automatically choosed the number of clusters.
+
+        :param normalize: If true, then normalize the similarity measured (i.e., the PMI) to be between -1 and 1.
+        :return: The cluster labels.
+        """
         if normalize:
             # use normalized PMI for similarity metric
             similarity = self.pmi / -np.log(self.joint_probs)
@@ -129,6 +151,23 @@ class PMIGraph(BaseEstimator):
 
     def visualize(self, cluster=False, savefile=None, doshow=True, seed=None, node_labels=None, label_idx=None,
                   mark_nodes=False):
+        """
+        Visualize the graph structure. The nodes positions are derived from the normalized PMI using the t-distributed
+        stochastic neighbors embedding, while the graph edges are derived from the normalized PMI values. To reduce
+        clutter, only those edges within top 5% of positive PMI values are drawn. The sizes of the nodes represent the
+        marginal frequencies of the features represented by each node.
+
+        :param cluster: If true, also cluster the nodes using affinity propagation and color them according to cluster
+            label.
+        :param savefile: The name of a file to save the figure to.
+        :param doshow: If true, then display the figure.
+        :param seed: The seed for the random number generator used for initialization of the t-distributed stochastic
+            neighbors embedding.
+        :param node_labels: A list of strings containing the labels for a set of nodes.
+        :param label_idx: The indices of the nodes to be labeled.
+        :param mark_nodes: If true, also mark the labeled nodes using a large green circle.
+        :return:
+        """
         if node_labels is None:
             node_labels = []
         if label_idx is None:
@@ -203,6 +242,21 @@ class PMIGraph(BaseEstimator):
 
 
 def fit_pmi_graph_cv(X, verbose=False, n_jobs=1, cv=7, doplot=False, graph=None):
+    """
+    Helper function to fit a PMIGraph instance while using cross-validation to choose the shrinkage parameter.
+
+    :param X: A binary-valued (nsamples, nfeatures) array marking the instances that each feature appears in a
+            sample or not. If X[i, j] = 1 then the jth feature appears in the ith sample; otherwise if X[i, j] then the
+            jth feature is absent from the ith sample.
+    :param verbose: If true, then provide helpful output.
+    :param n_jobs: The number of processors to use when computing the cross-validation scores. If n_jobs = -1, then all
+        available processors will be used.
+    :param cv: The number of CV folds to use, or an instance of a scikit-learn cross validation generator.
+    :param doplot: If true, then plot the CV binomial log-likelihood score as a function of the shrinkage parameter.
+    :param graph: An instance of a PMIGraph class. If None, then one will be instantiated.
+    :return: An instance of a PMIGraph, trained on the input data with shrinkage parameter chosen to maximize the
+        binomial log-likelihood averaged over the CV folds.
+    """
     nsamples, nfeatures = X.shape
     if graph is None:
         graph = PMIGraph()

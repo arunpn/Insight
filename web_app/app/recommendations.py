@@ -197,6 +197,14 @@ do_not_recommend = \
 
 
 def get_ingredients(ingredient_input):
+    """
+    Take the ingredients supplied by the user and map them to standard names in the database (e.g., pork loin -> pork).
+    If any ingredients are not recognized, return those too.
+
+    :param ingredient_input: The list of ingredient supplied by the user as input on the theflavory.me homepage.
+    :return:  A tuple containing the list of ingredients for compatibility with searching the database, and the list of
+        any unrecognized ingredients.
+    """
     # check if user gave a link to a yummly recipe
     input_ingredients = []
     if ingredient_input.startswith('http') or ingredient_input.startswith('www'):
@@ -229,6 +237,15 @@ def get_ingredients(ingredient_input):
 
 
 def get_recommendations(input_ingredients, flavor, nrecommendations):
+    """
+    Compute the list of recommended ingredients by comparing the strengths of the graph edges between the input recipe's
+    ingredients and the ingredients not in the recipe.
+
+    :param input_ingredients: The list of ingredients input by the user, after being filtered by the ingredient map.
+    :param flavor: The desired flavor profile: can be 'sweet', 'savory', 'piquant', or 'any'.
+    :param nrecommendations: The number of recommended ingredients to return.
+    :return: The list of recommended ingredients.
+    """
     conn = mdb.connect('localhost', 'root', '', 'recipes', charset='utf8')
     cur = conn.cursor()
     potential_ingredients = []

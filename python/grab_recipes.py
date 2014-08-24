@@ -4,8 +4,6 @@ __author__ = 'brandonkelly'
 
 import yummly
 import time
-import os
-import cPickle
 import numpy as np
 import os
 import pymysql

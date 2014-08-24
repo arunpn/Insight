@@ -135,6 +135,7 @@ def inv_logit(x):
 
 
 def fit_enet(X, flavors):
+    # derive the flavor profiles by fitting the elastic net
     flavors[flavors == 0] = 0.01  # logit(0) and logit(1) are not finite
     flavors[flavors == 1] = 0.99
     y = logit(flavors)
@@ -148,6 +149,7 @@ def fit_enet(X, flavors):
 
 
 def fit_lasso(X, flavors):
+    # derive the flavory profiles by fitting the LASSO
     flavors[flavors == 0] = 0.01  # logit(0) and logit(1) are not finite
     flavors[flavors == 1] = 0.99
     y = logit(flavors)
@@ -274,6 +276,7 @@ if __name__ == "__main__":
     X = X[:, ingredient_names]
     ingredient_names = uingredients[ingredient_names]
 
+    # plot the inferred recipe profiles vs the true values
     fit, axs = plt.subplots(2, 2)
     f_idx = 0
     for row in range(2):
@@ -319,6 +322,7 @@ if __name__ == "__main__":
 
     df.to_hdf(data_dir + 'flavor_profiles_' + model + '.h5', 'df')
 
+    # load into MySQL table
     cur.execute("DROP TABLE IF EXISTS Ingredient_Flavors")
     sql_command = "CREATE TABLE Ingredient_Flavors (Ingredient VARCHAR(100) PRIMARY KEY, Counts INT, "
     for fname in flav_names:
